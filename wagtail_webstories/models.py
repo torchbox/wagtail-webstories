@@ -1,7 +1,9 @@
 from django.db import models
+from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
+from wagtail.core.fields import StreamField
 from wagtail.core.models import Page
 
-from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel
+from .blocks import PageBlock
 
 
 class BaseWebStoryPage(Page):
@@ -10,6 +12,14 @@ class BaseWebStoryPage(Page):
     poster_portrait_src = models.URLField('Poster portrait image URL', blank=False, max_length=2047)
     poster_square_src = models.URLField('Poster square image URL', blank=True, max_length=2047)
     poster_landscape_src = models.URLField('Poster landscape image URL', blank=True, max_length=2047)
+
+    pages = StreamField([
+        ('page', PageBlock()),
+    ])
+
+    content_panels = Page.content_panels + [
+        StreamFieldPanel('pages'),
+    ]
 
     promote_panels = Page.promote_panels + [
         MultiFieldPanel([
