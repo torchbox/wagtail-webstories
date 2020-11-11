@@ -1,3 +1,5 @@
+import json
+
 from django.db import models
 from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
 from wagtail.core.fields import StreamField
@@ -32,6 +34,40 @@ class BaseWebStoryPage(Page):
             FieldPanel('poster_landscape_src'),
         ], heading="Poster"),
     ]
+
+    @property
+    def linked_data(self):
+        return {
+            "@context": "http://schema.org",
+            "@type": "NewsArticle",
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": self.full_url,
+            },
+            "headline": self.title,
+            "image": list(filter(bool, [
+                self.poster_portrait_src, self.poster_square_src, self.poster_landscape_src
+            ])),
+            "datePublished": (
+                self.first_published_at and self.first_published_at.isoformat()
+            ),
+            "dateModified": (
+                self.last_published_at and self.last_published_at.isoformat()
+            ),
+            "publisher": {
+                "@type": "Organisation",
+                "name": self.publisher,
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": self.publisher_logo_src
+                }
+            }
+        }
+
+    def get_context(self, request):
+        context = super().get_context(request)
+        context['ld_json'] = json.dumps(self.linked_data)
+        return context
 
     class Meta:
         abstract = True
