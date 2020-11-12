@@ -1,0 +1,37 @@
+{% extends "wagtailadmin/base.html" %}
+{% load wagtailadmin_tags %}
+{% load i18n %}
+
+{% block titletag %}{% trans "Import web story" %}{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    {{ form.media.js }}
+    {% include "wagtailadmin/pages/_editor_js.html" %}
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+    {% trans "Import web story" as title_str %}
+    {% include "wagtailadmin/shared/header.html" with title=title_str icon="openquote" %}
+
+    <div class="nice-padding">
+        <form action="{% url 'wagtail_webstories:import_story' %}" method="POST" novalidate>
+            {% csrf_token %}
+            <ul class="fields">
+                {% for field in form %}
+                    {% if field.is_hidden %}
+                        {{ field }}
+                    {% else %}
+                        {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
+                    {% endif %}
+                {% endfor %}
+                <li><input type="submit" value="{% trans 'Import' %}" class="button" /></li>
+            </ul>
+        </form>
+    </div>
+{% endblock %}
