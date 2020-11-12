@@ -15,11 +15,14 @@ class BaseWebStoryPage(Page):
     poster_square_src = models.URLField('Poster square image URL', blank=True, max_length=2047)
     poster_landscape_src = models.URLField('Poster landscape image URL', blank=True, max_length=2047)
 
+    custom_css = models.TextField(blank=True)
+
     pages = StreamField([
         ('page', PageBlock()),
     ])
 
     content_panels = Page.content_panels + [
+        FieldPanel('custom_css'),
         StreamFieldPanel('pages'),
     ]
 

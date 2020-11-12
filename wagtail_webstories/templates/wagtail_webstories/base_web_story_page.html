@@ -13,6 +13,9 @@
             <script type="application/ld+json">
                 {{ ld_json|safe }}
             </script>
+            {% if page.custom_css %}
+                <style amp-custom>{{ page.custom_css|safe }}</style>
+            {% endif %}
         {% endblock %}
     </head>
     <body>

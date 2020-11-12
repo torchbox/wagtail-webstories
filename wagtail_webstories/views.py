@@ -14,7 +14,9 @@ def import_story(request):
         form = ImportStoryForm(request.POST, user=request.user)
         if form.is_valid():
             try:
-                html = requests.get(form.cleaned_data['source_url']).text
+                req = requests.get(form.cleaned_data['source_url'])
+                req.encoding = 'utf-8'
+                html = req.text
                 story = Story(html)
                 story_is_valid = True
             except requests.exceptions.RequestException:
@@ -28,11 +30,12 @@ def import_story(request):
                 page_model = apps.get_model(settings.WAGTAIL_WEBSTORIES_IMPORT_MODEL)
                 page = page_model(
                     title=story.title,
-                    publisher=story.publisher,
-                    publisher_logo_src=story.publisher_logo_src,
-                    poster_portrait_src=story.poster_portrait_src,
-                    poster_square_src=story.poster_square_src,
-                    poster_landscape_src=story.poster_landscape_src,
+                    publisher=story.publisher or '',
+                    publisher_logo_src=story.publisher_logo_src or '',
+                    poster_portrait_src=story.poster_portrait_src or '',
+                    poster_square_src=story.poster_square_src or '',
+                    poster_landscape_src=story.poster_landscape_src or '',
+                    custom_css=story.custom_css or '',
                 )
                 page.pages = [
                     ('page', {'id': subpage.id, 'html': subpage.get_clean_html()})
