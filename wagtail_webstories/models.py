@@ -3,7 +3,7 @@ import json
 from django.db import models
 from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
 from wagtail.core.fields import StreamField
-from wagtail.core.models import Page
+from wagtail.core.models import Page, get_page_models
 
 from .blocks import PageBlock
 
@@ -74,3 +74,13 @@ class BaseWebStoryPage(Page):
 
     class Meta:
         abstract = True
+
+
+def get_story_page_models():
+    """
+    Return a list of all non-abstract page models that inherit from BaseWebStoryPage
+    """
+    return [
+        model for model in get_page_models()
+        if issubclass(model, BaseWebStoryPage)
+    ]
