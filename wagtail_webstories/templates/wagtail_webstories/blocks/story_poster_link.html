@@ -1,0 +1,10 @@
+{% load wagtailcore_tags %}
+<a href="{% pageurl page %}" target="_blank" class="webstory-poster" style="background-image: url({{ page.poster_portrait_src }});">
+    <div class="webstory-info">
+        <div class="title">{{ page.title }}</div>
+        <div class="publisher">
+            <img src="{{ page.publisher_logo_src }}" width="32" alt="">
+            {{ page.publisher }}
+        </div>
+    </div>
+</a>

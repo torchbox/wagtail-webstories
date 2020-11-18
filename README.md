@@ -51,3 +51,21 @@ The `target_model` argument is optional - by default, any page type inheriting f
     <style>
         amp-story-player { width: 360px; height: 600px; }
     </style>
+
+To include a link to a story rather than embedding it, `wagtail_webstories.blocks.StoryChooserBlock` can be used in place of `StoryEmbedBlock`. The default template `wagtail_webstories/blocks/story_poster_link.html` outputs a 'card' rendering of the story using the story's poster image, to be used with the following CSS:
+
+    .webstory-poster {
+        display: block; width: 300px; height: 400px; border-radius: 15px; background-size: cover; position: relative;
+    }
+    .webstory-poster .webstory-info {
+        position: absolute; bottom: 0; width: 100%; background-color: #ccc; color: black; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
+    }
+    .webstory-poster .title {
+        font-size: 1.5em; padding: 10px;
+    }
+    .webstory-poster .publisher {
+        padding: 0 10px 20px 10px;
+    }
+    .webstory-poster .publisher img {
+        vertical-align: middle;
+    }

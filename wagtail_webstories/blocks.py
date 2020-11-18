@@ -12,7 +12,7 @@ class PageBlock(blocks.StructBlock):
     html = AMPCleanHTMLBlock()
 
 
-class StoryEmbedBlock(blocks.PageChooserBlock):
+class StoryChooserBlock(blocks.PageChooserBlock):
     def __init__(self, **kwargs):
         has_specified_page_type = kwargs.get('page_type') or kwargs.get('target_model')
         if not has_specified_page_type:
@@ -27,5 +27,10 @@ class StoryEmbedBlock(blocks.PageChooserBlock):
         context['page'] = value.specific
         return context
 
+    class Meta:
+        template = 'wagtail_webstories/blocks/story_poster_link.html'
+
+
+class StoryEmbedBlock(StoryChooserBlock):
     class Meta:
         template = 'wagtail_webstories/blocks/story_embed_block.html'
