@@ -22,5 +22,10 @@ class StoryEmbedBlock(blocks.PageChooserBlock):
 
         super().__init__(**kwargs)
 
+    def get_context(self, value, parent_context=None):
+        context = super().get_context(value, parent_context=parent_context)
+        context['page'] = value.specific
+        return context
+
     class Meta:
         template = 'wagtail_webstories/blocks/story_embed_block.html'

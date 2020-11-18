@@ -1,4 +1,7 @@
 {% load wagtailcore_tags %}
 <amp-story-player>
-    <a href="{% pageurl value %}">{{ value.title }}</a>
+    <a href="{% pageurl page %}">
+        <img src="{{ page.poster_portrait_src }}" loading="lazy" width="100%" height="100%" amp-story-player-poster-img>
+        {{ page.title }}
+    </a>
 </amp-story-player>
