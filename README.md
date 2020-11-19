@@ -69,3 +69,17 @@ To include a link to a story rather than embedding it, `wagtail_webstories.block
     .webstory-poster .publisher img {
         vertical-align: middle;
     }
+
+The templates `wagtail_webstories/blocks/story_poster_link.html` and `wagtail_webstories/blocks/story_embed_block.html` expect a single variable `page` containing the story page instance, so these can also be used outside of StreamField:
+
+    # models.py
+    class StoryIndexPage(Page):
+        def get_context(self, request):
+            context = super().get_context(request)
+            context['stories'] = StoryPage.objects.child_of(self).live().order_by('-first_published_at')
+            return context
+
+    # story_index_page.html
+    {% for story in stories %}
+        {% include "wagtail_webstories/blocks/story_poster_link.html" with page=story %}
+    {% endfor %}
