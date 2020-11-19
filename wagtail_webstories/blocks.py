@@ -1,5 +1,5 @@
 from wagtail.core import blocks
-from webstory import StoryPage
+from webstories import StoryPage
 
 
 class AMPCleanHTMLBlock(blocks.RawHTMLBlock):

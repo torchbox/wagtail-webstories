@@ -20,7 +20,7 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
-        "webstoryparser @ git+ssh://git@github.com/gasman/webstoryparser@master#egg=webstoryparser",
+        "webstories>=0.0.1,<0.1",
         "requests>=2.24.0,<3",
     ],
     extras_require={

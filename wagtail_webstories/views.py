@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.utils.translation import gettext as _
 import requests
 from wagtail.admin import messages
-from webstory import Story
+from webstories import Story
 
 from .forms import ImportStoryForm
 
