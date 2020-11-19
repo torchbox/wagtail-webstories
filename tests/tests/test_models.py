@@ -15,7 +15,7 @@ class TestModels(TestCase):
             poster_portrait_src="https://example.com/wagtails.jpg",
         )
         self.story_page.custom_css = """
-            body {background-color: #eee;}
+            #cover {background-color: #eee;}
         """
         self.story_page.pages = [
             ('page', {
@@ -43,6 +43,7 @@ class TestModels(TestCase):
 
     def test_render_page(self):
         response = self.client.get('/wagtail-spotting/')
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'background-color: #eee;')
         self.assertContains(response, '<amp-story standalone')
         self.assertContains(response, 'title="Wagtail spotting"')

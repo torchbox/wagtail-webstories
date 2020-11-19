@@ -23,5 +23,10 @@ setup(
         "webstoryparser @ git+ssh://git@github.com/gasman/webstoryparser@master#egg=webstoryparser",
         "requests>=2.24.0,<3",
     ],
+    extras_require={
+        "testing": [
+            "responses>=0.12,<1",
+        ]
+    },
     license="BSD",
 )
