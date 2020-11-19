@@ -18,6 +18,8 @@ Add to INSTALLED_APPS:
 
 Define a model that extends `wagtail_webstories.models.BaseWebStoryPage`:
 
+    from wagtail_webstories.models import BaseWebStoryPage
+
     class StoryPage(BaseWebStoryPage):
         pass
 

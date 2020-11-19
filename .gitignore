@@ -1,1 +1,2 @@
-wagtail_webstories.egg-info
+/wagtail_webstories.egg-info
+/db.sqlite3
