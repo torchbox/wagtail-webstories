@@ -31,10 +31,10 @@ def import_story(request):
                 page = page_model(
                     title=story.title,
                     publisher=story.publisher or '',
-                    publisher_logo_src=story.publisher_logo_src or '',
-                    poster_portrait_src=story.poster_portrait_src or '',
-                    poster_square_src=story.poster_square_src or '',
-                    poster_landscape_src=story.poster_landscape_src or '',
+                    publisher_logo_src_original=story.publisher_logo_src or '',
+                    poster_portrait_src_original=story.poster_portrait_src or '',
+                    poster_square_src_original=story.poster_square_src or '',
+                    poster_landscape_src_original=story.poster_landscape_src or '',
                     custom_css=story.custom_css or '',
                 )
                 page.pages = [

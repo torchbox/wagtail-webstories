@@ -26,6 +26,7 @@ setup(
     extras_require={
         "testing": [
             "responses>=0.12,<1",
+            "Pillow>=4.0.0,<9.0.0",
         ]
     },
     license="BSD",

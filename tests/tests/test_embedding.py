@@ -11,8 +11,8 @@ class TestEmbedding(TestCase):
             title="Wagtail spotting",
             slug="wagtail-spotting",
             publisher="Torchbox",
-            publisher_logo_src="https://example.com/torchbox.png",
-            poster_portrait_src="https://example.com/wagtails.jpg",
+            publisher_logo_src_original="https://example.com/torchbox.png",
+            poster_portrait_src_original="https://example.com/wagtails.jpg",
         )
         self.story_page.custom_css = """
             #cover {background-color: #eee;}
