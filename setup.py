@@ -22,6 +22,7 @@ setup(
     install_requires=[
         "webstories>=0.0.1,<0.1",
         "requests>=2.24.0,<3",
+        "beautifulsoup4>=4.6,<5",
     ],
     extras_require={
         "testing": [

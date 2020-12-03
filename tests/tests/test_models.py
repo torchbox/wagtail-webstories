@@ -18,7 +18,7 @@ from tests.models import StoryPage
 TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
 
 
-def get_test_image_buffer(filename='test.png', format='PNG', colour='white', size=(640, 480)):
+def get_test_image_buffer(format='PNG', colour='white', size=(640, 480)):
     f = BytesIO()
     image = PIL.Image.new('RGB', size, colour)
     image.save(f, format)
@@ -26,7 +26,7 @@ def get_test_image_buffer(filename='test.png', format='PNG', colour='white', siz
 
 
 def get_test_image_file(filename='test.png', **kwargs):
-    f = get_test_image_buffer(filename=filename, **kwargs)
+    f = get_test_image_buffer(**kwargs)
     return ImageFile(f, name=filename)
 
 
@@ -51,6 +51,8 @@ class TestModels(TestCase):
                     <amp-story-page id="page-1">
                         <amp-story-grid-layer template="vertical">
                             <p>Today we went out wagtail spotting</p>
+                            <amp-img src="https://example.com/pied-wagtail.jpg" alt="A pied wagtail">
+                            </amp-img>
                         </amp-story-grid-layer>
                     </amp-story-page>
                 """
@@ -123,6 +125,7 @@ class TestModels(TestCase):
             poster_square_src_original="https://example.com/wagtails-square.jpg",
             poster_landscape_src_original="https://example.com/wagtails-landscape.jpg",
         )
+        story_page.pages = self.page_data
         self.home.add_child(instance=story_page)
 
         # set up dummy responses for image requests
@@ -145,6 +148,10 @@ class TestModels(TestCase):
         responses.add(
             responses.GET, 'https://example.com/wagtails-landscape.jpg', content_type='image/jpeg',
             body=poster_landscape_data
+        )
+        responses.add(
+            responses.GET, 'https://example.com/pied-wagtail.jpg', content_type='image/jpeg',
+            body=get_test_image_buffer(colour='yellow', format='JPEG', size=(320, 240)).getvalue()
         )
 
         story_page.import_images()
@@ -170,6 +177,12 @@ class TestModels(TestCase):
             story_page.get_poster_landscape_rendition().file.read(),
             poster_landscape_data
         )
+
+        # Check that images in page HTML have been imported
+        page_1_photo = Image.objects.get(title="A pied wagtail")
+        # an ID reference to the image should have been added in the HTML
+        page_1_html = story_page.pages[1].value['html']
+        self.assertIn('data-wagtail-image-id="%d"' % page_1_photo.id, page_1_html)
 
         # Subsequent imports of the same images should not create duplicates
         new_story_page = StoryPage(

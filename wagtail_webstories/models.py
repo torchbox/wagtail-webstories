@@ -2,6 +2,7 @@ import hashlib
 import json
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
 from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -145,20 +146,26 @@ class BaseWebStoryPage(Page):
         return context
 
     def import_images(self):
-        self._import_metadata_images()
+        meta_has_changed = self._import_metadata_images()
+        content_has_changed = self._import_content_images()
+        return meta_has_changed or content_has_changed
 
     def _import_metadata_images(self):
+        has_changed = False
+
         if self.publisher_logo_src_original and not self.publisher_logo:
             self.publisher_logo, created = self._image_from_url(
                 self.publisher_logo_src_original,
                 title="%s logo" % self.publisher,
             )
+            has_changed = True
 
         if self.poster_portrait_src_original and not self.poster_image:
             portrait_image_file = self._image_file_from_url(self.poster_portrait_src_original)
             self.poster_image, created = self._image_from_image_file(
                 portrait_image_file, title=self.title
             )
+            has_changed = True
 
             if created:
                 # Pre-generate renditions for whichever of portrait, square and landscape poster images
@@ -188,6 +195,36 @@ class BaseWebStoryPage(Page):
                         focal_point_key=landscape_filter.get_cache_key(self.poster_image)
                     )
 
+        return has_changed
+
+    def _import_content_images(self):
+        new_pages = []
+        has_changed = False
+
+        for page in self.pages:
+            if not isinstance(page.block, PageBlock):
+                # leave unrecognised block types unchanged in the output
+                new_pages.append((page.block_type, page.value))
+                continue
+
+            page_html = page.value['html']
+            page_dom = dom = BeautifulSoup(page_html, 'html.parser')
+            # look for <amp-img> elements with src attributes
+            for img_tag in page_dom.select('amp-img[src]'):
+                title = img_tag.get('alt') or ("image from story: %s" % self.title)
+                image, created = self._image_from_url(img_tag['src'], title=title)
+                img_tag['data-wagtail-image-id'] = image.id
+                del img_tag['src']
+                has_changed = True
+
+            page.value['html'] = str(page_dom)
+            new_pages.append((page.block_type, page.value))
+
+        if has_changed:
+            self.pages = new_pages
+
+        return has_changed
+
     def _image_file_from_url(self, url):
         url_obj = urlparse(url)
         filename = url_obj.path.split('/')[-1] or 'image'
@@ -197,7 +234,8 @@ class BaseWebStoryPage(Page):
     def _create_image(self, file, title=None):
         """
         Return an unsaved image instance for the given ImageFile and title. Override this if your
-        image model requires extra metadata to be filled in
+        image model requires extra metadata to be filled in, or you want to assign it to a specific
+        collection
         """
         return Image(file=file, title=title)
 
