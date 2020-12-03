@@ -74,33 +74,41 @@ class BaseWebStoryPage(Page):
         if errors:
             raise ValidationError(errors)
 
+    def get_publisher_logo_rendition(self):
+        if self.publisher_logo:
+            return self.publisher_logo.get_rendition(self.PUBLISHER_LOGO_IMAGE_FILTER)
+
     @property
     def publisher_logo_src(self):
-        if self.publisher_logo:
-            return self.publisher_logo.get_rendition(self.PUBLISHER_LOGO_IMAGE_FILTER).url
-        else:
-            return self.publisher_logo_src_original
+        rendition = self.get_publisher_logo_rendition()
+        return rendition.url if rendition else self.publisher_logo_src_original
+
+    def get_poster_portrait_rendition(self):
+        if self.poster_image:
+            return self.poster_image.get_rendition(self.PORTRAIT_IMAGE_FILTER)
 
     @property
     def poster_portrait_src(self):
+        rendition = self.get_poster_portrait_rendition()
+        return rendition.url if rendition else self.poster_portrait_src_original
+
+    def get_poster_square_rendition(self):
         if self.poster_image:
-            return self.poster_image.get_rendition(self.PORTRAIT_IMAGE_FILTER).url
-        else:
-            return self.poster_portrait_src_original
+            return self.poster_image.get_rendition(self.SQUARE_IMAGE_FILTER)
 
     @property
     def poster_square_src(self):
+        rendition = self.get_poster_square_rendition()
+        return rendition.url if rendition else self.poster_square_src_original
+
+    def get_poster_landscape_rendition(self):
         if self.poster_image:
-            return self.poster_image.get_rendition(self.SQUARE_IMAGE_FILTER).url
-        else:
-            return self.poster_square_src_original
+            return self.poster_image.get_rendition(self.LANDSCAPE_IMAGE_FILTER)
 
     @property
     def poster_landscape_src(self):
-        if self.poster_image:
-            return self.poster_image.get_rendition(self.LANDSCAPE_IMAGE_FILTER).url
-        else:
-            return self.poster_landscape_src_original
+        rendition = self.get_poster_landscape_rendition()
+        return rendition.url if rendition else self.poster_landscape_src_original
 
     @property
     def linked_data(self):

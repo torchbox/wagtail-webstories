@@ -115,7 +115,9 @@ class TestModels(TestCase):
             slug="wagtail-spotting",
             publisher="Torchbox",
             publisher_logo_src_original="https://example.com/torchbox.png",
-            poster_portrait_src_original="https://example.com/wagtails.jpg",
+            poster_portrait_src_original="https://example.com/wagtails-portrait.jpg",
+            poster_square_src_original="https://example.com/wagtails-square.jpg",
+            poster_landscape_src_original="https://example.com/wagtails-landscape.jpg",
         )
         self.home.add_child(instance=story_page)
 
@@ -124,15 +126,43 @@ class TestModels(TestCase):
             responses.GET, 'https://example.com/torchbox.png', content_type='image/png',
             body=get_test_image_buffer(colour='purple', size=(64, 64)).getvalue()
         )
+        poster_portrait_data = get_test_image_buffer(colour='black', format='JPEG', size=(640, 853)).getvalue()
+        poster_square_data = get_test_image_buffer(colour='blue', format='JPEG', size=(640, 640)).getvalue()
+        poster_landscape_data = get_test_image_buffer(colour='green', format='JPEG', size=(853, 640)).getvalue()
+
         responses.add(
-            responses.GET, 'https://example.com/wagtails.jpg', content_type='image/jpeg',
-            body=get_test_image_buffer(colour='black', format='JPEG', size=(128, 128)).getvalue()
+            responses.GET, 'https://example.com/wagtails-portrait.jpg', content_type='image/jpeg',
+            body=poster_portrait_data
+        )
+        responses.add(
+            responses.GET, 'https://example.com/wagtails-square.jpg', content_type='image/jpeg',
+            body=poster_square_data
+        )
+        responses.add(
+            responses.GET, 'https://example.com/wagtails-landscape.jpg', content_type='image/jpeg',
+            body=poster_landscape_data
         )
 
         story_page.import_images()
         story_page.save()
 
+        # Check that the publisher_logo / poster_image fields have been populated with
+        # corresponding local images
         logo = Image.objects.get(title="Torchbox logo")
         poster = Image.objects.get(title="Wagtail spotting")
         self.assertEqual(story_page.publisher_logo, logo)
         self.assertEqual(story_page.poster_image, poster)
+
+        # Renditions for the poster image should be prepopulated with the original image files
+        self.assertEqual(
+            story_page.get_poster_portrait_rendition().file.read(),
+            poster_portrait_data
+        )
+        self.assertEqual(
+            story_page.get_poster_square_rendition().file.read(),
+            poster_square_data
+        )
+        self.assertEqual(
+            story_page.get_poster_landscape_rendition().file.read(),
+            poster_landscape_data
+        )
