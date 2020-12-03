@@ -212,6 +212,7 @@ class BaseWebStoryPage(Page):
         else:
             image = self._create_image(file, title=title)
             image.save()
+            image.get_file_hash()  # ensure file_hash is populated
             return (image, True)
 
     def _image_from_url(self, url, title=None):

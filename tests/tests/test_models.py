@@ -166,3 +166,19 @@ class TestModels(TestCase):
             story_page.get_poster_landscape_rendition().file.read(),
             poster_landscape_data
         )
+
+        # Subsequent imports of the same images should not create duplicates
+        new_story_page = StoryPage(
+            title="Advanced wagtail spotting",
+            slug="advanced-wagtail-spotting",
+            publisher="Torchbox",
+            publisher_logo_src_original="https://example.com/torchbox.png",
+            poster_portrait_src_original="https://example.com/wagtails-portrait.jpg",
+            poster_square_src_original="https://example.com/wagtails-square.jpg",
+            poster_landscape_src_original="https://example.com/wagtails-landscape.jpg",
+        )
+        self.home.add_child(instance=new_story_page)
+        new_story_page.import_images()
+        new_story_page.save()
+        self.assertEqual(new_story_page.publisher_logo, logo)
+        self.assertEqual(new_story_page.poster_image, poster)
