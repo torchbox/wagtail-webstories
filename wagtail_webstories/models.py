@@ -136,6 +136,9 @@ class BaseWebStoryPage(Page):
         context['ld_json'] = json.dumps(self.linked_data)
         return context
 
+    def import_images(self):
+        self._import_metadata_images()
+
     def _import_metadata_images(self):
         if self.publisher_logo_src_original and not self.publisher_logo:
             self.publisher_logo, created = self._image_from_url(
@@ -204,7 +207,7 @@ class BaseWebStoryPage(Page):
             return (image, True)
 
     def _image_from_url(self, url, title=None):
-        image_file = self._get_image_file_from_url(url)
+        image_file = self._image_file_from_url(url)
         return self._image_from_image_file(image_file, title=title)
 
     class Meta:
