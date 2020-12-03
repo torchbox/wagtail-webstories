@@ -61,6 +61,10 @@ class TestModels(TestCase):
     def tearDown(self):
         shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
 
+    def test_fail(self):
+        # temporary failing test to verify config for nightly builds
+        self.assertEqual(2 + 2, 5)
+
     def test_render_page(self):
         story_page = StoryPage(
             title="Wagtail spotting",
