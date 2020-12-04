@@ -1,10 +1,58 @@
+from django.utils.safestring import mark_safe
 from wagtail.core import blocks
 from webstories import StoryPage
+
+from .markup import expand_entities
+
+
+class AMPText:
+    """Equivalent of Wagtail's RichText - performs entity expansion when rendered"""
+    def __init__(self, source):
+        self.source = (source or '')
+
+    def __html__(self):
+        return expand_entities(self.source)
+
+    def __str__(self):
+        return mark_safe(self.__html__())
+
+    def __bool__(self):
+        return bool(self.source)
 
 
 class AMPCleanHTMLBlock(blocks.RawHTMLBlock):
     def clean(self, value):
-        return StoryPage.clean_html_fragment(value or '')
+        if isinstance(value, AMPText):
+            return AMPText(StoryPage.clean_html_fragment(value.source))
+        else:
+            return value
+
+    def get_default(self):
+        if isinstance(self.meta.default, AMPText):
+            return self.meta.default
+        else:
+            return AMPText(self.meta.default)
+
+    def to_python(self, value):
+        if isinstance(value, AMPText):
+            return value
+        else:
+            return AMPText(value)
+
+    def get_prep_value(self, value):
+        if isinstance(value, AMPText):
+            return value.source
+        else:
+            return value
+
+    def value_for_form(self, value):
+        if isinstance(value, AMPText):
+            return value.source
+        else:
+            return value
+
+    def value_from_form(self, value):
+        return AMPText(value)
 
 
 class PageBlock(blocks.StructBlock):

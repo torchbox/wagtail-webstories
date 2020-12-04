@@ -76,8 +76,9 @@ class TestImport(TestCase):
         self.assertEqual(len(story.pages), 2)
         self.assertEqual(story.pages[0].value['id'], 'cover')
         self.assertEqual(story.pages[1].value['id'], 'page-1')
-        self.assertIn('<p>Today we went out wagtail spotting</p>', story.pages[1].value['html'])
-        self.assertNotIn('alert("boo!")', story.pages[1].value['html'])
+        page_1_html = str(story.pages[1].value['html'])
+        self.assertIn('<p>Today we went out wagtail spotting</p>', page_1_html)
+        self.assertNotIn('alert("boo!")', page_1_html)
 
     @responses.activate
     def test_post_not_story(self):

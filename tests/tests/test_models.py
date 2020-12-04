@@ -32,7 +32,13 @@ def get_test_image_file(filename='test.png', **kwargs):
 
 class TestModels(TestCase):
     def setUp(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
         self.home = Site.objects.get().root_page
+
+        self.mountain_wagtail = Image.objects.create(
+            title="Mountain wagtail",
+            file=get_test_image_file(filename='mountain-wagtail.png', colour='grey'),
+        )
 
         self.page_data = [
             ('page', {
@@ -53,12 +59,13 @@ class TestModels(TestCase):
                             <p>Today we went out wagtail spotting</p>
                             <amp-img src="https://example.com/pied-wagtail.jpg" alt="A pied wagtail">
                             </amp-img>
+                            <amp-img data-wagtail-image-id="%d" alt="A mountain wagtail">
+                            </amp-img>
                         </amp-story-grid-layer>
                     </amp-story-page>
-                """
+                """ % self.mountain_wagtail.id
             }),
         ]
-        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
 
     def tearDown(self):
         shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
@@ -87,6 +94,10 @@ class TestModels(TestCase):
         self.assertContains(response, '<amp-story standalone')
         self.assertContains(response, 'title="Wagtail spotting"')
         self.assertContains(response, '<p>Today we went out wagtail spotting</p>')
+
+        # image references should be expanded
+        self.assertNotContains(response, 'data-wagtail-image-id')
+        self.assertContains(response, 'src="http://media.example.com/media/images/mountain-wagtail.original.png"')
 
     def test_create_with_local_images(self):
         logo = Image.objects.create(
@@ -127,6 +138,7 @@ class TestModels(TestCase):
         )
         story_page.pages = self.page_data
         self.home.add_child(instance=story_page)
+        story_page.refresh_from_db()
 
         # set up dummy responses for image requests
         responses.add(

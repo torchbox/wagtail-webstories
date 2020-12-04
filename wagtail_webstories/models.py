@@ -207,7 +207,7 @@ class BaseWebStoryPage(Page):
                 new_pages.append((page.block_type, page.value))
                 continue
 
-            page_html = page.value['html']
+            page_html = page.value['html'].source
             page_dom = dom = BeautifulSoup(page_html, 'html.parser')
             # look for <amp-img> elements with src attributes
             for img_tag in page_dom.select('amp-img[src]'):
