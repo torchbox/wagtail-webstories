@@ -14,6 +14,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INSTALLED_APPS = [
     'tests',
     'wagtail_webstories',
+    'wagtailmedia',
 
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',

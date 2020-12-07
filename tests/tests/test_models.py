@@ -9,6 +9,7 @@ import PIL.Image
 import responses
 from wagtail.core.models import Site
 from wagtail.images.models import Image
+from wagtailmedia.models import Media
 
 from tests.models import StoryPage
 
@@ -40,6 +41,13 @@ class TestModels(TestCase):
             file=get_test_image_file(filename='mountain-wagtail.png', colour='grey'),
         )
 
+        self.wagtail_video = Media.objects.create(
+            title="Wagtail in flight",
+            # not actually a video file, but nobody's checking so it's good enough for a test
+            file=get_test_image_file(filename='wagtail-in-flight.webm', colour='green'),
+            duration=0,
+        )
+
         self.page_data = [
             ('page', {
                 'id': 'cover',
@@ -65,6 +73,19 @@ class TestModels(TestCase):
                     </amp-story-page>
                 """ % self.mountain_wagtail.id
             }),
+            ('page', {
+                'id': 'page-2',
+                'html': """
+                    <amp-story-page id="page-2">
+                        <amp-story-grid-layer template="vertical">
+                            <amp-video poster="https://example.com/wagtail-poster.png" width="600" height="800">
+                                <source data-wagtail-media-id="%d" type="video/webm" />
+                                <source src="https://example.com/wagtail-in-flight.mp4" type="video/mp4" />
+                            </amp-video>
+                        </amp-story-grid-layer>
+                    </amp-story-page>
+                """ % self.wagtail_video.id
+            })
         ]
 
     def tearDown(self):
@@ -94,6 +115,10 @@ class TestModels(TestCase):
         # image references should be expanded
         self.assertNotContains(response, 'data-wagtail-image-id')
         self.assertContains(response, 'src="http://media.example.com/media/images/mountain-wagtail.original.png"')
+
+        # video references should be expanded
+        self.assertNotContains(response, 'data-wagtail-media-id')
+        self.assertContains(response, 'src="http://media.example.com/media/media/wagtail-in-flight.webm"')
 
     def test_create_with_local_images(self):
         logo = Image.objects.create(
@@ -161,8 +186,17 @@ class TestModels(TestCase):
             responses.GET, 'https://example.com/pied-wagtail.jpg', content_type='image/jpeg',
             body=get_test_image_buffer(colour='yellow', format='JPEG', size=(320, 240)).getvalue()
         )
+        responses.add(
+            responses.GET, 'https://example.com/wagtail-poster.png', content_type='image/png',
+            body=get_test_image_buffer(colour='yellow', size=(600, 800)).getvalue()
+        )
+        responses.add(
+            responses.GET, 'https://example.com/wagtail-in-flight.mp4', content_type='video/mp4',
+            body="pretend this is a video"
+        )
 
         story_page.import_images()
+        story_page.import_videos()
         story_page.save()
 
         # Check that the publisher_logo / poster_image fields have been populated with
@@ -191,6 +225,16 @@ class TestModels(TestCase):
         # an ID reference to the image should have been added in the HTML
         page_1_html = story_page.pages[1].value['html'].source
         self.assertIn('data-wagtail-image-id="%d"' % page_1_photo.id, page_1_html)
+
+        # Check that videos in page HTML have been imported
+        page_2_video = Media.objects.get(file='media/wagtail-in-flight.mp4')
+        # metadata should be picked up from the amp-video tag
+        self.assertEqual(page_2_video.width, 600)
+        self.assertEqual(page_2_video.height, 800)
+        self.assertEqual(page_2_video.thumbnail_filename, 'wagtail-poster.png')
+        # an ID reference to the video should have been added in the HTML
+        page_2_html = story_page.pages[2].value['html'].source
+        self.assertIn('data-wagtail-media-id="%d"' % page_2_video.id, page_2_html)
 
         # Subsequent imports of the same images should not create duplicates
         new_story_page = StoryPage(
