@@ -189,7 +189,7 @@ class TestModels(TestCase):
         # Check that images in page HTML have been imported
         page_1_photo = Image.objects.get(title="A pied wagtail")
         # an ID reference to the image should have been added in the HTML
-        page_1_html = story_page.pages[1].value['html']
+        page_1_html = story_page.pages[1].value['html'].source
         self.assertIn('data-wagtail-image-id="%d"' % page_1_photo.id, page_1_html)
 
         # Subsequent imports of the same images should not create duplicates
