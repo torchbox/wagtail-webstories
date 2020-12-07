@@ -93,6 +93,20 @@ class StoryPage(BaseWebStoryPage):
         return image
 ```
 
+## Video importing
+
+If you have [wagtailmedia](https://pypi.org/project/wagtailmedia/) installed, you can similarly import videos into the local media library by calling `import_videos()`. The signal handler above then becomes:
+
+```python
+# myapp/signals.py
+
+@receiver(post_save, sender=StoryPage)
+def import_story_images(sender, instance, **kwargs):
+    images_changed = instance.import_images()
+    videos_changed = instance.import_videos()
+    if images_changed or videos_changed:
+        instance.save()
+```
 
 ## Linking and embedding
 
