@@ -18,6 +18,7 @@ from wagtail.images.edit_handlers import ImageChooserPanel
 from wagtail.images.models import Filter
 
 from .blocks import PageBlock
+from .markup import AMPText
 
 
 # Retrieve the (possibly custom) image model. Can't use get_image_model as of Wagtail 2.11, as we
@@ -146,8 +147,15 @@ class BaseWebStoryPage(Page):
         return context
 
     def import_images(self):
+        # if flag indicates we have imported images on this instance already,
+        # don't repeat; this allows us to call import_images / save within a
+        # post_save signal without the second save retriggering a full import_images
+        if getattr(self, '_has_imported_images', False):
+            return False  # report no changes
+
         meta_has_changed = self._import_metadata_images()
         content_has_changed = self._import_content_images()
+        self._has_imported_images = True
         return meta_has_changed or content_has_changed
 
     def _import_metadata_images(self):
@@ -217,7 +225,7 @@ class BaseWebStoryPage(Page):
                 del img_tag['src']
                 has_changed = True
 
-            page.value['html'] = str(page_dom)
+            page.value['html'] = AMPText(str(page_dom))
             new_pages.append((page.block_type, page.value))
 
         if has_changed:

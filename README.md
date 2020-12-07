@@ -33,6 +33,54 @@ To enable importing of web stories, define a setting `WAGTAIL_WEBSTORIES_IMPORT_
 
     WAGTAIL_WEBSTORIES_IMPORT_MODEL = 'myapp.StoryPage'
 
+## Image importing
+
+By default, image references within imported stories are left at their original URLs. BaseWebStoryPage provides a method `import_images()` to fetch all referenced images and import them into the Wagtail image library, de-duplicating if they already exist. It is recommended that you call this from a `post_save` signal handler:
+
+    # myapp/signals.py
+
+    from django.db.models.signals import post_save
+    from django.dispatch import receiver
+
+    from .models import StoryPage
+
+
+    @receiver(post_save, sender=StoryPage)
+    def import_story_images(sender, instance, **kwargs):
+        changed = instance.import_images()
+        if changed:
+            instance.save()
+
+
+    # myapp/apps.py
+
+    from django.apps import AppConfig
+
+
+    class MyappConfig(AppConfig):
+        name = 'myapp'
+
+        def ready(self):
+            import myapp.signals  # noqa
+
+
+    # myapp/__init__.py
+
+    default_app_config = 'myapp.apps.MyappConfig'
+
+Since importing images can be a time-consuming process, you may wish to offload the call to `import_images` to a background task using Celery or similar, to avoid this blocking a web server thread.
+
+To customise the creation of new images (e.g. to assign imported images to a particular collection, or to populate additional metadata fields on a custom image model), override the story page model's `_create_image` method:
+
+    class StoryPage(BaseWebStoryPage):
+
+        def _create_image(self, file, title=None):
+            image = super()._create_image(file, title=title)
+            image.copyright = "All rights reserved"
+            return image
+
+
+
 ## Linking and embedding
 
 To embed a web story into a regular (non-AMP) StreamField-based page, include the `wagtail_webstories.blocks.StoryEmbedBlock` block type in your StreamField definition:

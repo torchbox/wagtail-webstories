@@ -1,23 +1,7 @@
-from django.utils.safestring import mark_safe
 from wagtail.core import blocks
 from webstories import StoryPage
 
-from .markup import expand_entities
-
-
-class AMPText:
-    """Equivalent of Wagtail's RichText - performs entity expansion when rendered"""
-    def __init__(self, source):
-        self.source = (source or '')
-
-    def __html__(self):
-        return expand_entities(self.source)
-
-    def __str__(self):
-        return mark_safe(self.__html__())
-
-    def __bool__(self):
-        return bool(self.source)
+from .markup import AMPText
 
 
 class AMPCleanHTMLBlock(blocks.RawHTMLBlock):

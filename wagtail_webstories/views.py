@@ -8,6 +8,7 @@ from wagtail.admin import messages
 from webstories import Story
 
 from .forms import ImportStoryForm
+from .markup import AMPText
 
 def import_story(request):
     if request.method == 'POST':
@@ -38,9 +39,11 @@ def import_story(request):
                     custom_css=story.custom_css or '',
                 )
                 page.pages = [
-                    ('page', {'id': subpage.id, 'html': subpage.get_clean_html()})
+                    ('page', {'id': subpage.id, 'html': AMPText(subpage.get_clean_html())})
                     for subpage in story.pages
                 ]
+                for amp_page in page.pages:
+                    print(amp_page.value['html'].source)
                 parent_page = form.cleaned_data['destination']
                 parent_page.add_child(instance=page)
                 messages.success(request, _("Story '%s' imported.") % page.title)
