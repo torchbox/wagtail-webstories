@@ -7,6 +7,7 @@ setup(
     name="wagtail-webstories",
     version="0.0.1",
     packages=["wagtail_webstories"],
+    include_package_data=True,
     test_suite="tests",
     url="https://github.com/torchbox/wagtail-webstories/",
 
