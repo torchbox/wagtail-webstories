@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.images import ImageFile
 from django.test import TestCase
 import PIL.Image
+from requests.exceptions import HTTPError
 import responses
 from wagtail.core.models import Site
 from wagtail.images.models import Image
@@ -69,6 +70,8 @@ class TestModels(TestCase):
                             </amp-img>
                             <amp-img data-wagtail-image-id="%d" alt="A mountain wagtail">
                             </amp-img>
+                            <amp-img src="https://example.com/broken.jpg" alt="A broken image">
+                            </amp-img>
                         </amp-story-grid-layer>
                     </amp-story-page>
                 """ % self.mountain_wagtail.id
@@ -81,6 +84,7 @@ class TestModels(TestCase):
                             <amp-video poster="https://example.com/wagtail-poster.png" width="600" height="800">
                                 <source data-wagtail-media-id="%d" type="video/webm" />
                                 <source src="https://example.com/wagtail-in-flight.mp4" type="video/mp4" />
+                                <source src="https://example.com/broken.mp4" type="video/mp4" />
                             </amp-video>
                         </amp-story-grid-layer>
                     </amp-story-page>
@@ -187,12 +191,20 @@ class TestModels(TestCase):
             body=get_test_image_buffer(colour='yellow', format='JPEG', size=(320, 240)).getvalue()
         )
         responses.add(
+            responses.GET, 'https://example.com/broken.jpg',
+            body=HTTPError('not found')
+        )
+        responses.add(
             responses.GET, 'https://example.com/wagtail-poster.png', content_type='image/png',
             body=get_test_image_buffer(colour='yellow', size=(600, 800)).getvalue()
         )
         responses.add(
             responses.GET, 'https://example.com/wagtail-in-flight.mp4', content_type='video/mp4',
             body="pretend this is a video"
+        )
+        responses.add(
+            responses.GET, 'https://example.com/broken.mp4',
+            body=HTTPError('not found')
         )
 
         story_page.import_images()
@@ -225,6 +237,8 @@ class TestModels(TestCase):
         # an ID reference to the image should have been added in the HTML
         page_1_html = story_page.pages[1].value['html'].source
         self.assertIn('data-wagtail-image-id="%d"' % page_1_photo.id, page_1_html)
+        # broken image URLs are gracefully ignored
+        self.assertIn('src="https://example.com/broken.jpg"', page_1_html)
 
         # Check that videos in page HTML have been imported
         page_2_video = Media.objects.get(file='media/wagtail-in-flight.mp4')
@@ -235,6 +249,8 @@ class TestModels(TestCase):
         # an ID reference to the video should have been added in the HTML
         page_2_html = story_page.pages[2].value['html'].source
         self.assertIn('data-wagtail-media-id="%d"' % page_2_video.id, page_2_html)
+        # broken video URLs are gracefully ignored
+        self.assertIn('src="https://example.com/broken.mp4"', page_2_html)
 
         # Subsequent imports of the same images should not create duplicates
         new_story_page = StoryPage(
