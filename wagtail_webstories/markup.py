@@ -20,14 +20,29 @@ def _replace_image_id(match):
     return 'src="%s"' % escape(rendition.url)
 
 
+def _replace_media_id(match):
+    from wagtailmedia.models import get_media_model
+    Media = get_media_model()
+
+    try:
+        media = Media.objects.get(id=match.group(1))
+    except Media.DoesNotExist:
+        return ''
+
+    return 'src="%s"' % escape(media.url)
+
+
 FIND_DATA_WAGTAIL_IMAGE_ID_ATTR = re.compile(r'''\bdata-wagtail-image-id=["'](\d+)["']''')
+FIND_DATA_WAGTAIL_MEDIA_ID_ATTR = re.compile(r'''\bdata-wagtail-media-id=["'](\d+)["']''')
 
 def expand_entities(html):
     """
     Expand symbolic references in a string of AMP markup - e.g. convert
     data-wagtail-image-id="123" to src="/path/to/image.html"
     """
-    return FIND_DATA_WAGTAIL_IMAGE_ID_ATTR.sub(_replace_image_id, html)
+    html = FIND_DATA_WAGTAIL_IMAGE_ID_ATTR.sub(_replace_image_id, html)
+    html = FIND_DATA_WAGTAIL_MEDIA_ID_ATTR.sub(_replace_media_id, html)
+    return html
 
 
 class AMPText:
