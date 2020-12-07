@@ -1,6 +1,7 @@
 import hashlib
 import json
-from urllib.parse import urlparse
+import os.path
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 from django.apps import apps
@@ -26,6 +27,12 @@ from .markup import AMPText
 Image = apps.get_model(get_image_model_string(), require_ready=False)
 
 
+def _name_from_url(url):
+    url_obj = urlparse(url)
+    filename = url_obj.path.split('/')[-1]
+    return os.path.splitext(filename)[0]
+
+
 class BaseWebStoryPage(Page):
     PUBLISHER_LOGO_IMAGE_FILTER = 'original'
     PORTRAIT_IMAGE_FILTER = 'fill-640x853'
@@ -42,6 +49,8 @@ class BaseWebStoryPage(Page):
     poster_square_src_original = models.URLField('Poster square image URL', blank=True, max_length=2047, editable=False)
     poster_landscape_src_original = models.URLField('Poster landscape image URL', blank=True, max_length=2047, editable=False)
 
+    original_url = models.URLField('Original URL', blank=True, max_length=2047)
+
     custom_css = models.TextField(blank=True)
 
     pages = StreamField([
@@ -57,6 +66,7 @@ class BaseWebStoryPage(Page):
         MultiFieldPanel([
             FieldPanel('publisher'),
             ImageChooserPanel('publisher_logo'),
+            FieldPanel('original_url'),
         ], heading="Publisher"),
         MultiFieldPanel([
             ImageChooserPanel('poster_image'),
@@ -83,7 +93,10 @@ class BaseWebStoryPage(Page):
     @property
     def publisher_logo_src(self):
         rendition = self.get_publisher_logo_rendition()
-        return rendition.url if rendition else self.publisher_logo_src_original
+        if rendition:
+            return rendition.url
+        else:
+            return urljoin(self.original_url, self.publisher_logo_src_original)
 
     def get_poster_portrait_rendition(self):
         if self.poster_image:
@@ -92,7 +105,10 @@ class BaseWebStoryPage(Page):
     @property
     def poster_portrait_src(self):
         rendition = self.get_poster_portrait_rendition()
-        return rendition.url if rendition else self.poster_portrait_src_original
+        if rendition:
+            return rendition.url
+        else:
+            return urljoin(self.original_url, self.poster_portrait_src_original)
 
     def get_poster_square_rendition(self):
         if self.poster_image:
@@ -101,7 +117,10 @@ class BaseWebStoryPage(Page):
     @property
     def poster_square_src(self):
         rendition = self.get_poster_square_rendition()
-        return rendition.url if rendition else self.poster_square_src_original
+        if rendition:
+            return rendition.url
+        else:
+            return urljoin(self.original_url, self.poster_square_src_original)
 
     def get_poster_landscape_rendition(self):
         if self.poster_image:
@@ -110,7 +129,10 @@ class BaseWebStoryPage(Page):
     @property
     def poster_landscape_src(self):
         rendition = self.get_poster_landscape_rendition()
-        return rendition.url if rendition else self.poster_landscape_src_original
+        if rendition:
+            return rendition.url
+        else:
+            return urljoin(self.original_url, self.poster_landscape_src_original)
 
     @property
     def linked_data(self):
@@ -164,7 +186,7 @@ class BaseWebStoryPage(Page):
         if self.publisher_logo_src_original and not self.publisher_logo:
             try:
                 self.publisher_logo, created = self._image_from_url(
-                    self.publisher_logo_src_original,
+                    urljoin(self.original_url, self.publisher_logo_src_original),
                     title="%s logo" % self.publisher,
                 )
                 has_changed = True
@@ -173,7 +195,9 @@ class BaseWebStoryPage(Page):
 
         if self.poster_portrait_src_original and not self.poster_image:
             try:
-                portrait_image_file = self._image_file_from_url(self.poster_portrait_src_original)
+                portrait_image_file = self._image_file_from_url(
+                    urljoin(self.original_url, self.poster_portrait_src_original)
+                )
                 self.poster_image, created = self._image_from_image_file(
                     portrait_image_file, title=self.title
                 )
@@ -198,7 +222,9 @@ class BaseWebStoryPage(Page):
                     try:
                         self.poster_image.renditions.create(
                             filter_spec=self.SQUARE_IMAGE_FILTER,
-                            file=self._image_file_from_url(self.poster_square_src_original),
+                            file=self._image_file_from_url(
+                                urljoin(self.original_url, self.poster_square_src_original)
+                            ),
                             focal_point_key=square_filter.get_cache_key(self.poster_image)
                         )
                     except requests.exceptions.RequestException:
@@ -209,7 +235,9 @@ class BaseWebStoryPage(Page):
                     try:
                         self.poster_image.renditions.create(
                             filter_spec=self.LANDSCAPE_IMAGE_FILTER,
-                            file=self._image_file_from_url(self.poster_landscape_src_original),
+                            file=self._image_file_from_url(
+                                urljoin(self.original_url, self.poster_landscape_src_original)
+                            ),
                             focal_point_key=landscape_filter.get_cache_key(self.poster_image)
                         )
                     except requests.exceptions.RequestException:
@@ -231,9 +259,14 @@ class BaseWebStoryPage(Page):
             page_dom = dom = BeautifulSoup(page_html, 'html.parser')
             # look for <amp-img> elements with src attributes
             for img_tag in page_dom.select('amp-img[src]'):
-                title = img_tag.get('alt') or ("image from story: %s" % self.title)
+                image_url = urljoin(self.original_url, img_tag['src'])
+                title = (
+                    img_tag.get('alt')
+                    or _name_from_url(image_url)
+                    or ("image from story: %s" % self.title)
+                )
                 try:
-                    image, created = self._image_from_url(img_tag['src'], title=title)
+                    image, created = self._image_from_url(image_url, title=title)
                     img_tag['data-wagtail-image-id'] = image.id
                     del img_tag['src']
                     has_changed = True
@@ -304,7 +337,9 @@ class BaseWebStoryPage(Page):
                 poster_url = video_tag.get('poster')
                 if poster_url:
                     try:
-                        poster_image_file = self._image_file_from_url(poster_url)
+                        poster_image_file = self._image_file_from_url(
+                            urljoin(self.original_url, poster_url)
+                        )
                     except requests.exceptions.RequestException:
                         poster_image_file = None
                 else:
@@ -312,13 +347,14 @@ class BaseWebStoryPage(Page):
 
                 width = video_tag.get('width')
                 height = video_tag.get('height')
-                title = "video from story: %s" % self.title
+                fallback_title = "video from story: %s" % self.title
 
                 video_url = video_tag.get('src')
                 if video_url:
+                    title = _name_from_url(video_url) or fallback_title
                     try:
                         video, created = self._video_from_url(
-                            video_url,
+                            urljoin(self.original_url, video_url),
                             title=title, width=width, height=height,
                             thumbnail=poster_image_file
                         )
@@ -331,9 +367,10 @@ class BaseWebStoryPage(Page):
                 for source_tag in video_tag.find_all('source', recursive=False):
                     video_url = source_tag.get('src')
                     if video_url:
+                        title = _name_from_url(video_url) or fallback_title
                         try:
                             video, created = self._video_from_url(
-                                video_url,
+                                urljoin(self.original_url, video_url),
                                 title=title, width=width, height=height,
                                 thumbnail=poster_image_file
                             )

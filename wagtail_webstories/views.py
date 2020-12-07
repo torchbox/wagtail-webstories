@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from django.apps import apps
 from django.conf import settings
 from django.template.response import TemplateResponse
@@ -14,8 +16,9 @@ def import_story(request):
     if request.method == 'POST':
         form = ImportStoryForm(request.POST, user=request.user)
         if form.is_valid():
+            source_url = form.cleaned_data['source_url']
             try:
-                req = requests.get(form.cleaned_data['source_url'])
+                req = requests.get(source_url)
                 req.encoding = 'utf-8'
                 html = req.text
                 story = Story(html)
@@ -29,14 +32,36 @@ def import_story(request):
 
             if story_is_valid:
                 page_model = apps.get_model(settings.WAGTAIL_WEBSTORIES_IMPORT_MODEL)
+
+                if story.publisher_logo_src:
+                    publisher_logo_src = urljoin(source_url, story.publisher_logo_src)
+                else:
+                    publisher_logo_src = ''
+
+                if story.poster_portrait_src:
+                    poster_portrait_src = urljoin(source_url, story.poster_portrait_src)
+                else:
+                    poster_portrait_src = ''
+
+                if story.poster_square_src:
+                    poster_square_src = urljoin(source_url, story.poster_square_src)
+                else:
+                    poster_square_src = ''
+
+                if story.poster_landscape_src:
+                    poster_landscape_src = urljoin(source_url, story.poster_landscape_src)
+                else:
+                    poster_landscape_src = ''
+
                 page = page_model(
                     title=story.title,
                     publisher=story.publisher or '',
-                    publisher_logo_src_original=story.publisher_logo_src or '',
-                    poster_portrait_src_original=story.poster_portrait_src or '',
-                    poster_square_src_original=story.poster_square_src or '',
-                    poster_landscape_src_original=story.poster_landscape_src or '',
+                    publisher_logo_src_original=publisher_logo_src,
+                    poster_portrait_src_original=poster_portrait_src,
+                    poster_square_src_original=poster_square_src,
+                    poster_landscape_src_original=poster_landscape_src,
                     custom_css=story.custom_css or '',
+                    original_url=source_url,
                 )
                 page.pages = [
                     ('page', {'id': subpage.id, 'html': AMPText(subpage.get_clean_html())})

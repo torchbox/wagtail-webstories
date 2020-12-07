@@ -66,7 +66,7 @@ class TestModels(TestCase):
                     <amp-story-page id="page-1">
                         <amp-story-grid-layer template="vertical">
                             <p>Today we went out wagtail spotting</p>
-                            <amp-img src="https://example.com/pied-wagtail.jpg" alt="A pied wagtail">
+                            <amp-img src="/pied-wagtail.jpg" alt="A pied wagtail">
                             </amp-img>
                             <amp-img data-wagtail-image-id="%d" alt="A mountain wagtail">
                             </amp-img>
@@ -81,9 +81,9 @@ class TestModels(TestCase):
                 'html': """
                     <amp-story-page id="page-2">
                         <amp-story-grid-layer template="vertical">
-                            <amp-video poster="https://example.com/wagtail-poster.png" width="600" height="800">
+                            <amp-video poster="/wagtail-poster.png" width="600" height="800">
                                 <source data-wagtail-media-id="%d" type="video/webm" />
-                                <source src="https://example.com/wagtail-in-flight.mp4" type="video/mp4" />
+                                <source src="/wagtail-in-flight.mp4" type="video/mp4" />
                                 <source src="https://example.com/broken.mp4" type="video/mp4" />
                             </amp-video>
                         </amp-story-grid-layer>
@@ -102,6 +102,7 @@ class TestModels(TestCase):
             publisher="Torchbox",
             publisher_logo_src_original="https://example.com/torchbox.png",
             poster_portrait_src_original="https://example.com/wagtails.jpg",
+            original_url="https://example.com/stories/wagtail-spotting.html",
         )
         story_page.custom_css = """
             #cover {background-color: #eee;}
@@ -160,6 +161,7 @@ class TestModels(TestCase):
             poster_portrait_src_original="https://example.com/wagtails-portrait.jpg",
             poster_square_src_original="https://example.com/wagtails-square.jpg",
             poster_landscape_src_original="https://example.com/wagtails-landscape.jpg",
+            original_url="https://example.com/stories/wagtail-spotting.html",
         )
         story_page.pages = self.page_data
         self.home.add_child(instance=story_page)
@@ -243,6 +245,7 @@ class TestModels(TestCase):
         # Check that videos in page HTML have been imported
         page_2_video = Media.objects.get(file='media/wagtail-in-flight.mp4')
         # metadata should be picked up from the amp-video tag
+        self.assertEqual(page_2_video.title, 'wagtail-in-flight')
         self.assertEqual(page_2_video.width, 600)
         self.assertEqual(page_2_video.height, 800)
         self.assertEqual(page_2_video.thumbnail_filename, 'wagtail-poster.png')
