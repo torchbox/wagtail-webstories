@@ -1,2 +1,4 @@
 /wagtail_webstories.egg-info
 /db.sqlite3
+/build
+/dist

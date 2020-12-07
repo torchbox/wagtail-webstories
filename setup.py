@@ -1,19 +1,26 @@
 from setuptools import setup
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name="wagtail-webstories",
     version="0.0.1",
     packages=["wagtail_webstories"],
     test_suite="tests",
+    url="https://github.com/torchbox/wagtail-webstories/",
 
     author="Matt Westcott",
     author_email="matthew@torchbox.com",
     description="AMP web story support for Wagtail",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
+        "Framework :: Wagtail :: 2",
         "Topic :: Internet :: WWW/HTTP",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
