@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 import requests
 from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
 from wagtail.core.fields import StreamField
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.core.files.images import ImageFile
 from wagtail.core.models import Page, get_page_models
 from wagtail.images import get_image_model_string
@@ -162,18 +162,24 @@ class BaseWebStoryPage(Page):
         has_changed = False
 
         if self.publisher_logo_src_original and not self.publisher_logo:
-            self.publisher_logo, created = self._image_from_url(
-                self.publisher_logo_src_original,
-                title="%s logo" % self.publisher,
-            )
-            has_changed = True
+            try:
+                self.publisher_logo, created = self._image_from_url(
+                    self.publisher_logo_src_original,
+                    title="%s logo" % self.publisher,
+                )
+                has_changed = True
+            except requests.exceptions.RequestException:
+                pass
 
         if self.poster_portrait_src_original and not self.poster_image:
-            portrait_image_file = self._image_file_from_url(self.poster_portrait_src_original)
-            self.poster_image, created = self._image_from_image_file(
-                portrait_image_file, title=self.title
-            )
-            has_changed = True
+            try:
+                portrait_image_file = self._image_file_from_url(self.poster_portrait_src_original)
+                self.poster_image, created = self._image_from_image_file(
+                    portrait_image_file, title=self.title
+                )
+                has_changed = True
+            except requests.exceptions.RequestException:
+                created = False
 
             if created:
                 # Pre-generate renditions for whichever of portrait, square and landscape poster images
@@ -189,19 +195,25 @@ class BaseWebStoryPage(Page):
 
                 if self.poster_square_src_original:
                     square_filter = Filter(self.SQUARE_IMAGE_FILTER)
-                    self.poster_image.renditions.create(
-                        filter_spec=self.SQUARE_IMAGE_FILTER,
-                        file=self._image_file_from_url(self.poster_square_src_original),
-                        focal_point_key=square_filter.get_cache_key(self.poster_image)
-                    )
+                    try:
+                        self.poster_image.renditions.create(
+                            filter_spec=self.SQUARE_IMAGE_FILTER,
+                            file=self._image_file_from_url(self.poster_square_src_original),
+                            focal_point_key=square_filter.get_cache_key(self.poster_image)
+                        )
+                    except requests.exceptions.RequestException:
+                        pass
 
                 if self.poster_landscape_src_original:
                     landscape_filter = Filter(self.LANDSCAPE_IMAGE_FILTER)
-                    self.poster_image.renditions.create(
-                        filter_spec=self.LANDSCAPE_IMAGE_FILTER,
-                        file=self._image_file_from_url(self.poster_landscape_src_original),
-                        focal_point_key=landscape_filter.get_cache_key(self.poster_image)
-                    )
+                    try:
+                        self.poster_image.renditions.create(
+                            filter_spec=self.LANDSCAPE_IMAGE_FILTER,
+                            file=self._image_file_from_url(self.poster_landscape_src_original),
+                            focal_point_key=landscape_filter.get_cache_key(self.poster_image)
+                        )
+                    except requests.exceptions.RequestException:
+                        pass
 
         return has_changed
 
@@ -220,10 +232,13 @@ class BaseWebStoryPage(Page):
             # look for <amp-img> elements with src attributes
             for img_tag in page_dom.select('amp-img[src]'):
                 title = img_tag.get('alt') or ("image from story: %s" % self.title)
-                image, created = self._image_from_url(img_tag['src'], title=title)
-                img_tag['data-wagtail-image-id'] = image.id
-                del img_tag['src']
-                has_changed = True
+                try:
+                    image, created = self._image_from_url(img_tag['src'], title=title)
+                    img_tag['data-wagtail-image-id'] = image.id
+                    del img_tag['src']
+                    has_changed = True
+                except requests.exceptions.RequestException:
+                    pass
 
             page.value['html'] = AMPText(str(page_dom))
             new_pages.append((page.block_type, page.value))
@@ -237,6 +252,7 @@ class BaseWebStoryPage(Page):
         url_obj = urlparse(url)
         filename = url_obj.path.split('/')[-1] or 'image'
         response = requests.get(url)
+        response.raise_for_status()
         return ImageFile(ContentFile(response.content), name=filename)
 
     def _create_image(self, file, title=None):
@@ -264,6 +280,100 @@ class BaseWebStoryPage(Page):
     def _image_from_url(self, url, title=None):
         image_file = self._image_file_from_url(url)
         return self._image_from_image_file(image_file, title=title)
+
+    def import_videos(self):
+        # if flag indicates we have imported videos on this instance already,
+        # don't repeat; this allows us to call import_videos / save within a
+        # post_save signal without the second save retriggering a full import_videos
+        if getattr(self, '_has_imported_videos', False):
+            return False  # report no changes
+
+        content_has_changed = False
+        new_pages = []
+
+        for page in self.pages:
+            if not isinstance(page.block, PageBlock):
+                # leave unrecognised block types unchanged in the output
+                new_pages.append((page.block_type, page.value))
+                continue
+
+            page_html = page.value['html'].source
+            page_dom = dom = BeautifulSoup(page_html, 'html.parser')
+            # look for <amp-video> elements
+            for video_tag in page_dom.select('amp-video'):
+                poster_url = video_tag.get('poster')
+                if poster_url:
+                    try:
+                        poster_image_file = self._image_file_from_url(poster_url)
+                    except requests.exceptions.RequestException:
+                        poster_image_file = None
+                else:
+                    poster_image_file = None
+
+                width = video_tag.get('width')
+                height = video_tag.get('height')
+                title = "video from story: %s" % self.title
+
+                video_url = video_tag.get('src')
+                if video_url:
+                    try:
+                        video, created = self._video_from_url(
+                            video_url,
+                            title=title, width=width, height=height,
+                            thumbnail=poster_image_file
+                        )
+                        video_tag['data-wagtail-media-id'] = video.id
+                        del video_tag['src']
+                        content_has_changed = True
+                    except requests.exceptions.RequestException:
+                        pass
+
+                for source_tag in video_tag.find_all('source', recursive=False):
+                    video_url = source_tag.get('src')
+                    if video_url:
+                        try:
+                            video, created = self._video_from_url(
+                                video_url,
+                                title=title, width=width, height=height,
+                                thumbnail=poster_image_file
+                            )
+                            source_tag['data-wagtail-media-id'] = video.id
+                            del source_tag['src']
+                            content_has_changed = True
+                        except requests.exceptions.RequestException:
+                            pass
+
+            page.value['html'] = AMPText(str(page_dom))
+            new_pages.append((page.block_type, page.value))
+
+        if content_has_changed:
+            self.pages = new_pages
+
+        self._has_imported_videos = True
+        return content_has_changed
+
+    def _video_file_from_url(self, url):
+        url_obj = urlparse(url)
+        filename = url_obj.path.split('/')[-1] or 'video'
+        response = requests.get(url)
+        response.raise_for_status()
+        return File(ContentFile(response.content), name=filename)
+
+    def _create_video(self, file, **kwargs):
+        from wagtailmedia.models import get_media_model
+        Media = get_media_model()
+        # for wagtailmedia < 0.7, need to ensure that the duration field
+        # is populated
+        if 'duration' not in kwargs and not Media._meta.get_field('duration').blank:
+            kwargs['duration'] = 0
+        video = Media(file=file, **kwargs)
+        return video
+
+    def _video_from_url(self, url, **kwargs):
+        video_file = self._video_file_from_url(url)
+        video = self._create_video(video_file, type='video', **kwargs)
+        video.save()
+        return (video, True)
 
     class Meta:
         abstract = True
