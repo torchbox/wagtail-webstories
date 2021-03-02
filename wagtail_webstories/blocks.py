@@ -1,3 +1,4 @@
+from django.conf import settings
 from wagtail.core import blocks
 from webstories import StoryPage
 
@@ -6,7 +7,7 @@ from .markup import AMPText
 
 class AMPCleanHTMLBlock(blocks.RawHTMLBlock):
     def clean(self, value):
-        if isinstance(value, AMPText):
+        if isinstance(value, AMPText) and getattr(settings, 'WAGTAIL_WEBSTORIES_CLEAN_HTML', True):
             return AMPText(StoryPage.clean_html_fragment(value.source))
         else:
             return value
