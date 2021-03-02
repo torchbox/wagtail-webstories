@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Permission, User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from requests.exceptions import HTTPError
 import responses
 from wagtail.core.models import Page
@@ -7,26 +7,7 @@ from wagtail.core.models import Page
 from tests.models import StoryPage
 
 
-class TestImport(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_superuser(username='admin', email='admin@example.com', password='12345')
-        self.client.login(username='admin', password='12345')
-        self.home = Page.objects.filter(depth=2).first()
-
-    def test_menu_item(self):
-        response = self.client.get('/admin/')
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'href="/admin/webstories/import/"')
-
-    def test_get(self):
-        response = self.client.get('/admin/webstories/import/')
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Import web story')
-
-    @responses.activate
-    def test_post(self):
-        responses.add(
-            responses.GET, 'https://example.com/good-story.html', body="""<!DOCTYPE HTML>
+WAGTAIL_SPOTTING_STORY = """<!DOCTYPE HTML>
 <html ⚡>
     <head>
         <meta charset="utf-8">
@@ -59,8 +40,30 @@ class TestImport(TestCase):
         </amp-story>
     </body>
 </html>"""
+
+
+class TestImport(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(username='admin', email='admin@example.com', password='12345')
+        self.client.login(username='admin', password='12345')
+        self.home = Page.objects.filter(depth=2).first()
+
+    def test_menu_item(self):
+        response = self.client.get('/admin/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/admin/webstories/import/"')
+
+    def test_get(self):
+        response = self.client.get('/admin/webstories/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Import web story')
+
+    @responses.activate
+    def test_post(self):
+        responses.add(
+            responses.GET, 'https://example.com/good-story.html', body=WAGTAIL_SPOTTING_STORY
         )
-        
+
         response = self.client.post('/admin/webstories/import/', {
             'source_url': 'https://example.com/good-story.html',
             'destination': self.home.pk,
@@ -80,6 +83,33 @@ class TestImport(TestCase):
         page_1_html = str(story.pages[1].value['html'])
         self.assertIn('<p>Today we went out wagtail spotting</p>', page_1_html)
         self.assertNotIn('alert("boo!")', page_1_html)
+
+    @override_settings(WAGTAIL_WEBSTORIES_CLEAN_HTML=False)
+    @responses.activate
+    def test_post_with_html_cleaning_disabled(self):
+        responses.add(
+            responses.GET, 'https://example.com/good-story.html', body=WAGTAIL_SPOTTING_STORY
+        )
+
+        response = self.client.post('/admin/webstories/import/', {
+            'source_url': 'https://example.com/good-story.html',
+            'destination': self.home.pk,
+        })
+        self.assertRedirects(response, '/admin/pages/%d/' % self.home.pk)
+        story = Page.objects.get(url_path='/home/wagtail-spotting/').specific
+        self.assertEqual(type(story), StoryPage)
+        self.assertEqual(story.title, "Wagtail spotting")
+        self.assertEqual(story.publisher, "Torchbox")
+        self.assertEqual(story.publisher_logo_src, "https://example.com/torchbox.png")
+        self.assertEqual(story.poster_portrait_src, "https://example.com/wagtails.jpg")
+        self.assertEqual(story.original_url, "https://example.com/good-story.html")
+        self.assertIn("background-color: #eee;", story.custom_css)
+        self.assertEqual(len(story.pages), 2)
+        self.assertEqual(story.pages[0].value['id'], 'cover')
+        self.assertEqual(story.pages[1].value['id'], 'page-1')
+        page_1_html = str(story.pages[1].value['html'])
+        self.assertIn('<p>Today we went out wagtail spotting</p>', page_1_html)
+        self.assertIn('alert("boo!")', page_1_html)
 
     @responses.activate
     def test_post_not_story(self):

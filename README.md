@@ -43,6 +43,15 @@ To enable importing of web stories, define a setting `WAGTAIL_WEBSTORIES_IMPORT_
 WAGTAIL_WEBSTORIES_IMPORT_MODEL = 'myapp.StoryPage'
 ```
 
+## HTML cleaning
+
+By default, all HTML elements and attributes not permitted by the AMP web story specification will be stripped out on importing and saving. To disable this, set `WAGTAIL_WEBSTORIES_CLEAN_HTML` to False:
+
+```python
+WAGTAIL_WEBSTORIES_CLEAN_HTML = False
+```
+
+
 ## Image importing
 
 By default, image references within imported stories are left at their original URLs. BaseWebStoryPage provides a method `import_images()` to fetch all referenced images and import them into the Wagtail image library, de-duplicating if they already exist. It is recommended that you call this from a `post_save` signal handler:

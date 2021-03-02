@@ -63,10 +63,17 @@ def import_story(request):
                     custom_css=story.custom_css or '',
                     original_url=source_url,
                 )
-                page.pages = [
-                    ('page', {'id': subpage.id, 'html': AMPText(subpage.get_clean_html())})
-                    for subpage in story.pages
-                ]
+                if getattr(settings, 'WAGTAIL_WEBSTORIES_CLEAN_HTML', True):
+                    page.pages = [
+                        ('page', {'id': subpage.id, 'html': AMPText(subpage.get_clean_html())})
+                        for subpage in story.pages
+                    ]
+                else:
+                    page.pages = [
+                        ('page', {'id': subpage.id, 'html': AMPText(subpage.html)})
+                        for subpage in story.pages
+                    ]
+
                 parent_page = form.cleaned_data['destination']
                 parent_page.add_child(instance=page)
                 messages.success(request, _("Story '%s' imported.") % page.title)
