@@ -9,9 +9,10 @@ from wagtailmedia.models import Media
 
 from tests.models import StoryPage
 from tests.utils import get_test_image_buffer, get_test_image_file, TEST_MEDIA_DIR
+from wagtail_webstories.models import ExternalStory
 
 
-class TestModels(TestCase):
+class TestStoryPage(TestCase):
     def setUp(self):
         shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
         self.home = Site.objects.get().root_page
@@ -249,3 +250,54 @@ class TestModels(TestCase):
         new_story_page.save()
         self.assertEqual(new_story_page.publisher_logo, logo)
         self.assertEqual(new_story_page.poster_image, poster)
+
+
+class TestExternalStory(TestCase):
+    @responses.activate
+    def test_lookup(self):
+        responses.add(
+            responses.GET, 'https://example.com/good-story.html', content_type='text/html',
+            body="""<!doctype html>
+<html ⚡>
+    <head>
+        <meta charset="utf-8">
+        <title>not the story title</title>
+        <link rel="canonical" href="https://example.com/good-story.html">
+        <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+        <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
+        <script async src="https://cdn.ampproject.org/v0.js"></script>
+        <script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>
+        <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+        <style amp-custom>#cover {background-color: #eee;}</style>
+    </head>
+    <body>
+        <amp-story standalone
+            title="Wagtail spotting"
+            publisher="Torchbox"
+            publisher-logo-src="https://example.com/torchbox.png"
+            poster-portrait-src="/wagtails.jpg">
+            <amp-story-page id="cover">
+                <amp-story-grid-layer template="vertical">
+                    <h1>Wagtail spotting</h1>
+                </amp-story-grid-layer>
+            </amp-story-page>
+        </amp-story>
+    </body>
+</html>
+            """
+        )
+
+        self.assertEqual(len(responses.calls), 0)
+        story = ExternalStory.get_for_url('https://example.com/good-story.html')
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(story.title, "Wagtail spotting")
+        self.assertEqual(story.publisher, "Torchbox")
+        self.assertEqual(story.publisher_logo_src, "https://example.com/torchbox.png")
+        self.assertEqual(story.poster_portrait_src, "https://example.com/wagtails.jpg")
+        self.assertEqual(story.poster_square_src, "")
+        self.assertEqual(story.poster_landscape_src, "")
+
+        # subsequent fetches should return the same object and not hit the URL
+        story2 = ExternalStory.get_for_url('https://example.com/good-story.html')
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(story, story2)

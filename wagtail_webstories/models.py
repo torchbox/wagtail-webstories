@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import requests
 from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
@@ -17,6 +18,7 @@ from wagtail.core.models import Page, get_page_models
 from wagtail.images import get_image_model_string
 from wagtail.images.edit_handlers import ImageChooserPanel
 from wagtail.images.models import Filter
+from webstories import Story
 
 from .blocks import PageBlock
 from .markup import AMPText
@@ -424,3 +426,38 @@ def get_story_page_models():
         model for model in get_page_models()
         if issubclass(model, BaseWebStoryPage)
     ]
+
+
+class ExternalStory(models.Model):
+    url = models.TextField()
+    # a SHA-1 hash of the URL
+    url_hash = models.CharField(max_length=32, editable=False, unique=True, db_index=True)
+    title = models.TextField(blank=True, editable=False)
+    publisher = models.TextField(blank=False, editable=False)
+    publisher_logo_src = models.TextField('Publisher logo URL', blank=True, editable=False)
+    poster_portrait_src = models.TextField('Poster portrait image URL', blank=True, editable=False)
+    poster_square_src = models.TextField('Poster square image URL', blank=True, editable=False)
+    poster_landscape_src = models.TextField('Poster landscape image URL', blank=True, editable=False)
+    last_fetched_at = models.DateTimeField()
+
+    @classmethod
+    def get_for_url(cls, url):
+        url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()
+        try:
+            return cls.objects.get(url_hash=url_hash)
+        except cls.DoesNotExist:
+            html = requests.get(url).text
+            story = Story(html)
+            result, created = cls.objects.update_or_create(
+                url_hash=url_hash, defaults={
+                    'url': url,
+                    'title': story.title,
+                    'publisher': story.publisher,
+                    'publisher_logo_src': urljoin(url, story.publisher_logo_src) if story.publisher_logo_src else '',
+                    'poster_portrait_src': urljoin(url, story.poster_portrait_src) if story.poster_portrait_src else '',
+                    'poster_square_src': urljoin(url, story.poster_square_src) if story.poster_square_src else '',
+                    'poster_landscape_src': urljoin(url, story.poster_landscape_src) if story.poster_landscape_src else '',
+                    'last_fetched_at': timezone.now(),
+                }
+            )
+            return result
