@@ -108,7 +108,17 @@ class StoryPage(BaseWebStoryPage):
     pass
 ```
 
-Create a corresponding template that extends `wagtail_webstories/base_web_story_page.html`:
+Alternatively, if your project has an existing base page class that all page types must inherit from (which would prevent the use of BaseWebStoryPage in addition to that base class), extend `wagtail_webstories.models.WebStoryPageMixin` and define `content_panels` and `promote_panels` to incorporate its panel definitions:
+
+```python
+from wagtail_webstories.models import WebStoryPageMixin
+
+class StoryPage(WebStoryPageMixin, BasePage):
+    content_panels = BasePage.content_panels + WebStoryPageMixin.web_story_content_panels
+    promote_panels = BasePage.promote_panels + WebStoryPageMixin.web_story_promote_panels
+```
+
+Now create a corresponding template that extends `wagtail_webstories/base_web_story_page.html`:
 
 ```html+django
 {% extends "wagtail_webstories/base_web_story_page.html" %}
