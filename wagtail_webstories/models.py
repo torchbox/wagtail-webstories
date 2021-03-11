@@ -35,7 +35,7 @@ def _name_from_url(url):
     return os.path.splitext(filename)[0]
 
 
-class BaseWebStoryPage(Page):
+class WebStoryPageMixin(models.Model):
     PUBLISHER_LOGO_IMAGE_FILTER = 'original'
     PORTRAIT_IMAGE_FILTER = 'fill-640x853'
     SQUARE_IMAGE_FILTER = 'fill-640x640'
@@ -59,12 +59,12 @@ class BaseWebStoryPage(Page):
         ('page', PageBlock()),
     ])
 
-    content_panels = Page.content_panels + [
+    web_story_content_panels = [
         FieldPanel('custom_css'),
         StreamFieldPanel('pages'),
     ]
 
-    promote_panels = Page.promote_panels + [
+    web_story_promote_panels = [
         MultiFieldPanel([
             FieldPanel('publisher'),
             ImageChooserPanel('publisher_logo'),
@@ -418,13 +418,21 @@ class BaseWebStoryPage(Page):
         abstract = True
 
 
+class BaseWebStoryPage(WebStoryPageMixin, Page):
+    content_panels = Page.content_panels + WebStoryPageMixin.web_story_content_panels
+    promote_panels = Page.promote_panels + WebStoryPageMixin.web_story_promote_panels
+
+    class Meta:
+        abstract = True
+
+
 def get_story_page_models():
     """
-    Return a list of all non-abstract page models that inherit from BaseWebStoryPage
+    Return a list of all non-abstract page models that inherit from WebStoryPageMixin
     """
     return [
         model for model in get_page_models()
-        if issubclass(model, BaseWebStoryPage)
+        if issubclass(model, WebStoryPageMixin)
     ]
 
 
