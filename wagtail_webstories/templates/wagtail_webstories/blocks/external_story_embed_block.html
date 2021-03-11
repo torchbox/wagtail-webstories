@@ -1,0 +1,7 @@
+{% load wagtailcore_tags %}
+<amp-story-player>
+    <a href="{{ story.url }}">
+        <img src="{{ story.poster_portrait_src }}" loading="lazy" width="100%" height="100%" amp-story-player-poster-img>
+        {{ story.title }}
+    </a>
+</amp-story-player>
