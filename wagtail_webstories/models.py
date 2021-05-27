@@ -439,7 +439,7 @@ def get_story_page_models():
 class ExternalStory(models.Model):
     url = models.TextField()
     # a SHA-1 hash of the URL
-    url_hash = models.CharField(max_length=32, editable=False, unique=True, db_index=True)
+    url_hash = models.CharField(max_length=40, editable=False, unique=True, db_index=True)
     title = models.TextField(blank=True, editable=False)
     publisher = models.TextField(blank=False, editable=False)
     publisher_logo_src = models.TextField('Publisher logo URL', blank=True, editable=False)

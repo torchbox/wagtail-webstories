@@ -79,10 +79,24 @@ WSGI_APPLICATION = 'tests.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#databases
 
+db_engine = os.environ.get('DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+if db_engine == 'django.db.backends.sqlite3':
+    default_db_name = os.path.join(BASE_DIR, 'db.sqlite3')
+else:
+    default_db_name = 'wagtail_webstories'
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': db_engine,
+        'NAME': os.environ.get('DATABASE_NAME', default_db_name),
+        'USER': os.environ.get('DATABASE_USER', None),
+        'PASSWORD': os.environ.get('DATABASE_PASS', None),
+        'HOST': os.environ.get('DATABASE_HOST', None),
+
+        'TEST': {
+            'NAME': os.environ.get('DATABASE_NAME', None),
+        }
     }
 }
 
