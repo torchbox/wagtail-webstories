@@ -1,12 +1,12 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="wagtail-webstories",
-    version="0.0.3",
-    packages=["wagtail_webstories"],
+    version="0.0.4",
+    packages=find_packages(exclude=('tests', 'tests.*')),
     include_package_data=True,
     test_suite="tests",
     url="https://github.com/torchbox/wagtail-webstories/",
