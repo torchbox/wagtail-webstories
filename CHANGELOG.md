@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.0.4 (2021-05-27)
+------------------
+
+* Fix length of url_hash field
+* Fix packaging to include migrations
+
+
 0.0.3 (2021-03-11)
 ------------------
 
