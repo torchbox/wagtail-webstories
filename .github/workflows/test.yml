@@ -7,11 +7,12 @@ on:
   pull_request:
 
 # Current configuration:
-# - django 2.2, python 3.6, wagtail 2.5
-# - django 2.2, python 3.7, wagtail 2.7
-# - django 3.0, python 3.8, wagtail 2.10
-# - django 3.1, python 3.8, wagtail 2.11
-# - django 3.1, python 3.9, wagtail main (allow failures)
+# - django 2.2, python 3.6, wagtail 2.5, sqlite
+# - django 2.2, python 3.7, wagtail 2.7, postgres
+# - django 3.0, python 3.8, wagtail 2.11, postgres
+# - django 3.1, python 3.8, wagtail 2.12, sqlite
+# - django 3.2, python 3.9, wagtail 2.13, postgres
+# - django 3.2, python 3.9, wagtail main, sqlite (allow failures)
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,23 +23,40 @@ jobs:
           - python: 3.6
             django: "Django>=2.2,<2.3"
             wagtail: "wagtail>=2.5,<2.6"
+            database: "sqlite3"
             experimental: false
           - python: 3.7
             django: "Django>=2.2,<2.3"
             wagtail: "wagtail>=2.7,<2.8"
+            database: "postgresql"
             experimental: false
           - python: 3.8
             django: "Django>=3.0,<3.1"
-            wagtail: "wagtail>=2.10,<2.11"
+            wagtail: "wagtail>=2.11,<2.12"
+            database: "postgresql"
             experimental: false
           - python: 3.8
             django: "Django>=3.1,<3.2"
-            wagtail: "wagtail>=2.11,<2.12"
+            wagtail: "wagtail>=2.12,<2.13"
+            database: "sqlite3"
+            experimental: false
+          - python: 3.8
+            django: "Django>=3.2,<3.3"
+            wagtail: "wagtail>=2.13,<2.14"
+            database: "postgresql"
             experimental: false
           - python: 3.9
-            django: "Django>=3.1,<3.2"
+            django: "Django>=3.2,<3.3"
             wagtail: "git+https://github.com/wagtail/wagtail.git@main#egg=wagtail"
+            database: "sqlite3"
             experimental: true
+
+    services:
+      postgres:
+        image: postgres:10.8
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - uses: actions/checkout@v2
@@ -49,8 +67,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "psycopg2>=2.6"
           pip install "${{ matrix.django }}"
           pip install "${{ matrix.wagtail }}"
           pip install -e .[testing]
       - name: Test
         run: ./runtests.py
+        env:
+          DATABASE_ENGINE: django.db.backends.${{ matrix.database }}
+          DATABASE_HOST: localhost
+          DATABASE_USER: postgres
+          DATABASE_PASS: postgres
