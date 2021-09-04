@@ -97,6 +97,8 @@ class ExternalStoryBlock(blocks.URLBlock):
         # serialisable value should be a URL string
         if value is None:
             return ''
+        elif isinstance(value, str):
+            return value
         else:
             return value.url
 
