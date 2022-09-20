@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'wagtail.images',
     'wagtail.search',
     'wagtail.admin',
-    'wagtail.core',
+    'wagtail' if WAGTAIL_VERSION >= (3, 0) else 'wagtail.core',
 
     'modelcluster',
     'taggit',

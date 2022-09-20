@@ -1,11 +1,15 @@
+import responses
 from django.contrib.auth.models import Permission, User
 from django.test import TestCase, override_settings
 from requests.exceptions import HTTPError
-import responses
-from wagtail.core.models import Page
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page
+else:
+    from wagtail.core.models import Page
 
 from tests.models import StoryPage
-
 
 WAGTAIL_SPOTTING_STORY = """<!DOCTYPE HTML>
 <html ⚡>
@@ -51,7 +55,7 @@ class TestImport(TestCase):
     def test_menu_item(self):
         response = self.client.get('/admin/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'href="/admin/webstories/import/"')
+        self.assertContains(response, '/admin/webstories/import/')
 
     def test_get(self):
         response = self.client.get('/admin/webstories/import/')

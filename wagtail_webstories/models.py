@@ -1,22 +1,31 @@
 import hashlib
 import json
 import os.path
+import requests
+
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 from django.apps import apps
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile, File
+from django.core.files.images import ImageFile
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-import requests
-from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
-from wagtail.core.fields import StreamField
-from django.core.files.base import ContentFile, File
-from django.core.files.images import ImageFile
-from wagtail.core.models import Page, get_page_models
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+    from wagtail.fields import StreamField
+    from wagtail.models import Page, get_page_models
+else:
+    from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
+    from wagtail.core.fields import StreamField
+    from wagtail.core.models import Page, get_page_models
+    from wagtail.images.edit_handlers import ImageChooserPanel
+
 from wagtail.images import get_image_model_string
-from wagtail.images.edit_handlers import ImageChooserPanel
 from wagtail.images.models import Filter
 from webstories import Story
 
@@ -59,21 +68,39 @@ class WebStoryPageMixin(models.Model):
         ('page', PageBlock()),
     ])
 
-    web_story_content_panels = [
-        FieldPanel('custom_css'),
-        StreamFieldPanel('pages'),
-    ]
+    if WAGTAIL_VERSION >= (3, 0):
+        web_story_content_panels = [
+            FieldPanel('custom_css'),
+            FieldPanel('pages'),
+        ]
+    else:
+        web_story_content_panels = [
+            FieldPanel('custom_css'),
+            StreamFieldPanel('pages'),
+        ]
 
-    web_story_promote_panels = [
-        MultiFieldPanel([
-            FieldPanel('publisher'),
-            ImageChooserPanel('publisher_logo'),
-            FieldPanel('original_url'),
-        ], heading="Publisher"),
-        MultiFieldPanel([
-            ImageChooserPanel('poster_image'),
-        ], heading="Poster"),
-    ]
+    if WAGTAIL_VERSION >= (3, 0):
+        web_story_promote_panels = [
+            MultiFieldPanel([
+                FieldPanel('publisher'),
+                FieldPanel('publisher_logo'),
+                FieldPanel('original_url'),
+            ], heading="Publisher"),
+            MultiFieldPanel([
+                FieldPanel('poster_image'),
+            ], heading="Poster"),
+        ]        
+    else:
+        web_story_promote_panels = [
+            MultiFieldPanel([
+                FieldPanel('publisher'),
+                ImageChooserPanel('publisher_logo'),
+                FieldPanel('original_url'),
+            ], heading="Publisher"),
+            MultiFieldPanel([
+                ImageChooserPanel('poster_image'),
+            ], heading="Poster"),
+        ]
 
     def clean(self):
         super().clean()

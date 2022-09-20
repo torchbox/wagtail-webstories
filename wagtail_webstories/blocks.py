@@ -1,8 +1,14 @@
+import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-import requests
-from wagtail.core import blocks
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail import blocks
+else:
+    from wagtail.core import blocks
+
 from webstories import Story, StoryPage
 
 from .markup import AMPText
@@ -75,6 +81,7 @@ class StoryEmbedBlock(StoryChooserBlock):
 class ExternalStoryBlock(blocks.URLBlock):
     def get_default(self):
         from .models import ExternalStory
+
         # Allow specifying the default as either an ExternalStory or a URL string (or None).
         if not self.meta.default:
             return None
@@ -86,6 +93,7 @@ class ExternalStoryBlock(blocks.URLBlock):
 
     def to_python(self, value):
         from .models import ExternalStory
+
         # The JSON representation of an ExternalStoryBlock value is a URL string;
         # this should be converted to an ExternalStory instance (or None).
         if not value:
