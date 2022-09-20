@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+------------------
+
+* Update for wagtail v3+ incl. v4
+
+
 0.0.4 (2021-05-27)
 ------------------
 
