@@ -19,10 +19,19 @@ class Migration(migrations.Migration):
         ('tests', '0004_storypage_original_url'),
     ]
 
-    operations = [
-        migrations.AlterField(
-            model_name='blogpage',
-            name='body',
-            field=wagtail_fields.StreamField([('heading', wagtail_blocks.CharBlock()), ('story_embed', wagtail_webstories.blocks.StoryEmbedBlock()), ('story_link', wagtail_webstories.blocks.StoryChooserBlock()), ('external_story_embed', wagtail_webstories.blocks.ExternalStoryEmbedBlock()), ('external_story_link', wagtail_webstories.blocks.ExternalStoryBlock())]),
-        ),
-    ]
+    if WAGTAIL_VERSION >= (3, 0):
+        operations = [
+            migrations.AlterField(
+                model_name='blogpage',
+                name='body',
+                field=wagtail_fields.StreamField([('heading', wagtail_blocks.CharBlock()), ('story_embed', wagtail_webstories.blocks.StoryEmbedBlock()), ('story_link', wagtail_webstories.blocks.StoryChooserBlock()), ('external_story_embed', wagtail_webstories.blocks.ExternalStoryEmbedBlock()), ('external_story_link', wagtail_webstories.blocks.ExternalStoryBlock())], use_json_field=True),
+            ),
+        ]
+    else:
+        operations = [
+            migrations.AlterField(
+                model_name='blogpage',
+                name='body',
+                field=wagtail_fields.StreamField([('heading', wagtail_blocks.CharBlock()), ('story_embed', wagtail_webstories.blocks.StoryEmbedBlock()), ('story_link', wagtail_webstories.blocks.StoryChooserBlock()), ('external_story_embed', wagtail_webstories.blocks.ExternalStoryEmbedBlock()), ('external_story_link', wagtail_webstories.blocks.ExternalStoryBlock())]),
+            ),
+        ]

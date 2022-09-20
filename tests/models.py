@@ -25,13 +25,22 @@ class StoryPage(BaseWebStoryPage):
 
 
 class BlogPage(Page):
-    body = StreamField([
-        ('heading', blocks.CharBlock()),
-        ('story_embed', StoryEmbedBlock()),
-        ('story_link', StoryChooserBlock()),
-        ('external_story_embed', ExternalStoryEmbedBlock()),
-        ('external_story_link', ExternalStoryBlock()),
-    ])
+    if WAGTAIL_VERSION >= (3, 0):
+        body = StreamField([
+            ('heading', blocks.CharBlock()),
+            ('story_embed', StoryEmbedBlock()),
+            ('story_link', StoryChooserBlock()),
+            ('external_story_embed', ExternalStoryEmbedBlock()),
+            ('external_story_link', ExternalStoryBlock()),
+        ], use_json_field=True)
+    else:
+        body = StreamField([
+            ('heading', blocks.CharBlock()),
+            ('story_embed', StoryEmbedBlock()),
+            ('story_link', StoryChooserBlock()),
+            ('external_story_embed', ExternalStoryEmbedBlock()),
+            ('external_story_link', ExternalStoryBlock()),
+        ])
 
     if WAGTAIL_VERSION >= (3, 0):
         content_panels = Page.content_panels + [

@@ -64,9 +64,14 @@ class WebStoryPageMixin(models.Model):
 
     custom_css = models.TextField(blank=True)
 
-    pages = StreamField([
-        ('page', PageBlock()),
-    ])
+    if WAGTAIL_VERSION >= (3, 0):
+        pages = StreamField([
+            ('page', PageBlock()),
+        ], use_json_field=True)
+    else:
+        pages = StreamField([
+            ('page', PageBlock()),
+        ])
 
     if WAGTAIL_VERSION >= (3, 0):
         web_story_content_panels = [
