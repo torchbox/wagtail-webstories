@@ -36,7 +36,7 @@ setup(
         "testing": [
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<9.0.0",
-            "wagtailmedia>=0.6,<0.8",
+            "wagtailmedia>=0.6,<0.11",
         ]
     },
     license="BSD",
