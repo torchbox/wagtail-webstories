@@ -142,5 +142,10 @@ SECRET_KEY = 'not needed'
 # Wagtail settings
 
 WAGTAIL_SITE_NAME = "wagtail-transfer"
-BASE_URL = 'http://example.com'
+
+if WAGTAIL_VERSION >= (3, 0):
+    WAGTAILADMIN_BASE_URL = 'http://example.com'
+else:
+    BASE_URL = 'http://example.com'
+
 WAGTAIL_WEBSTORIES_IMPORT_MODEL = 'tests.StoryPage'
