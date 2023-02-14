@@ -2,12 +2,8 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-from wagtail import VERSION as WAGTAIL_VERSION
 
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail import blocks
-else:
-    from wagtail.core import blocks
+from wagtail import blocks
 
 from webstories import Story, StoryPage
 

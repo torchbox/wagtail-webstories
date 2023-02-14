@@ -1,3 +1,5 @@
+import requests
+
 from urllib.parse import urljoin
 
 from django.apps import apps
@@ -5,8 +7,8 @@ from django.conf import settings
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect
 from django.utils.translation import gettext as _
-import requests
 from wagtail.admin import messages
+
 from webstories import Story
 
 from .forms import ImportStoryForm

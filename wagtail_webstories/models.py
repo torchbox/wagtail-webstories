@@ -13,20 +13,13 @@ from django.core.files.images import ImageFile
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from wagtail import VERSION as WAGTAIL_VERSION
 
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-    from wagtail.fields import StreamField
-    from wagtail.models import Page, get_page_models
-else:
-    from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel, StreamFieldPanel
-    from wagtail.core.fields import StreamField
-    from wagtail.core.models import Page, get_page_models
-    from wagtail.images.edit_handlers import ImageChooserPanel
-
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.fields import StreamField
 from wagtail.images import get_image_model_string
 from wagtail.images.models import Filter
+from wagtail.models import Page, get_page_models
+
 from webstories import Story
 
 from .blocks import PageBlock
@@ -64,48 +57,25 @@ class WebStoryPageMixin(models.Model):
 
     custom_css = models.TextField(blank=True)
 
-    if WAGTAIL_VERSION >= (3, 0):
-        pages = StreamField([
-            ('page', PageBlock()),
-        ], use_json_field=True)
-    else:
-        pages = StreamField([
-            ('page', PageBlock()),
-        ])
+    pages = StreamField([
+        ('page', PageBlock()),
+    ], use_json_field=True)
 
-    if WAGTAIL_VERSION >= (3, 0):
-        web_story_content_panels = [
-            FieldPanel('custom_css'),
-            FieldPanel('pages'),
-        ]
-    else:
-        web_story_content_panels = [
-            FieldPanel('custom_css'),
-            StreamFieldPanel('pages'),
-        ]
+    web_story_content_panels = [
+        FieldPanel('custom_css'),
+        FieldPanel('pages'),
+    ]
 
-    if WAGTAIL_VERSION >= (3, 0):
-        web_story_promote_panels = [
-            MultiFieldPanel([
-                FieldPanel('publisher'),
-                FieldPanel('publisher_logo'),
-                FieldPanel('original_url'),
-            ], heading="Publisher"),
-            MultiFieldPanel([
-                FieldPanel('poster_image'),
-            ], heading="Poster"),
-        ]        
-    else:
-        web_story_promote_panels = [
-            MultiFieldPanel([
-                FieldPanel('publisher'),
-                ImageChooserPanel('publisher_logo'),
-                FieldPanel('original_url'),
-            ], heading="Publisher"),
-            MultiFieldPanel([
-                ImageChooserPanel('poster_image'),
-            ], heading="Poster"),
-        ]
+    web_story_promote_panels = [
+        MultiFieldPanel([
+            FieldPanel('publisher'),
+            FieldPanel('publisher_logo'),
+            FieldPanel('original_url'),
+        ], heading="Publisher"),
+        MultiFieldPanel([
+            FieldPanel('poster_image'),
+        ], heading="Poster"),
+    ]        
 
     def clean(self):
         super().clean()
