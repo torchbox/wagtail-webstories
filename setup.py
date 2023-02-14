@@ -26,17 +26,18 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
-        "webstories>=0.0.1,<0.1",
-        "requests>=2.24.0,<3",
+        "wagtail>=4.1",
+        "webstories>=0.0.1",
+        "requests>=2.24.0",
         "beautifulsoup4>=4.6,<5",
     ],
     extras_require={
         "testing": [
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<9.0.0",
-            "wagtailmedia>=0.6,<0.11",
+            "wagtailmedia>=0.6",
         ]
     },
     license="BSD",
