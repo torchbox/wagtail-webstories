@@ -5,6 +5,8 @@ Unreleased
 ------------------
 
 * Update for wagtail v3+ incl. v4
+* Update for wagtail v4.1+
+* Drop support for wagtail < 4.1
 
 
 0.0.4 (2021-05-27)
