@@ -21,7 +21,12 @@ setup(
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
-        "Framework :: Wagtail :: 2",
+        "Framework :: Django",
+        "Framework :: Django :: 3",
+        "Framework :: Django :: 4",
+        "Framework :: Wagtail",
+        "Framework :: Wagtail :: 4",
+        "Framework :: Wagtail :: 5",
         "Topic :: Internet :: WWW/HTTP",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
@@ -37,7 +42,7 @@ setup(
         "testing": [
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<9.0.0",
-            "wagtailmedia>=0.6,<0.13",
+            "wagtailmedia>=0.6,<0.15",
         ]
     },
     license="BSD",
