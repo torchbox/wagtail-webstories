@@ -36,7 +36,7 @@ setup(
     extras_require={
         "testing": [
             "responses>=0.12,<1",
-            "Pillow>=4.0.0,<9.0.0",
+            "Pillow>=4.0.0,<10.0.0",
             "wagtailmedia>=0.6,<0.15",
         ]
     },
