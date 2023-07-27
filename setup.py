@@ -34,8 +34,8 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "wagtail>=4.1",
-        "webstories>=0.0.1",
-        "requests>=2.24.0",
+        "webstories>=0.0.1,<1",
+        "requests>=2.24.0,<3",
         "beautifulsoup4>=4.6,<5",
     ],
     extras_require={
