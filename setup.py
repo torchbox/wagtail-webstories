@@ -31,7 +31,7 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "wagtail>=4.1",
         "webstories>=0.0.1,<1",
