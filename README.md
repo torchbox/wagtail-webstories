@@ -33,7 +33,7 @@ Run migrations:
 To embed a web story into a regular (non-AMP) StreamField-based page, include the `wagtail_webstories.blocks.ExternalStoryEmbedBlock` block type in your StreamField definition:
 
 ```python
-from wagtail_webstories.blocks import StoryEmbedBlock
+from wagtail_webstories.blocks import ExternalStoryEmbedBlock
 
 class BlogPage(Page):
     body = StreamField([
