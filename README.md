@@ -2,7 +2,7 @@
 
 This package adds support for [AMP web stories](https://amp.dev/about/stories/) to Wagtail. Stories created elsewhere can be linked or embedded from their original URL locations, or imported as Wagtail pages, including optionally importing images and videos into the Wagtail media library.
 
-`wagtail-webstories` is compatible with Wagtail 2.5 and above.
+`wagtail-webstories` is compatible with Wagtail 4.1 and above.
 
 ## Installation
 
