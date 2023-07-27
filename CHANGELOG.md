@@ -4,9 +4,11 @@ Changelog
 Unreleased
 ------------------
 
-* Update for wagtail v3+ incl. v4
-* Update for wagtail v4.1+
-* Drop support for wagtail < 4.1
+* Update for Wagtail v3+ incl. v4
+* Update for Wagtail v4.1+
+* Update for Django 4.2
+* Drop support for Wagtail < 4.1
+* Drop support for Python 3.7
 
 
 0.0.4 (2021-05-27)
