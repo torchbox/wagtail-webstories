@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+Update for Wagtail 5.1
+
+
 0.1 (2023-07-27)
 ----------------
 
