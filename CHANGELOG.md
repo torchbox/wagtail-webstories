@@ -4,7 +4,8 @@ Changelog
 Unreleased
 ----------
 
-Update for Wagtail 5.1
+* Add support for Wagtail 5.1 and 5.2
+* Add tox for testing
 
 
 0.1 (2023-07-27)

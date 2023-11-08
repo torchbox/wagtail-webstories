@@ -40,6 +40,7 @@ setup(
     ],
     extras_require={
         "testing": [
+            "tox",
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<10.0.0",
             "wagtailmedia>=0.6,<0.15",

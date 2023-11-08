@@ -6,84 +6,22 @@ on:
     branches: [ main ]
   pull_request:
 
-# Current configuration:
-# - django 3.2, python 3.8, wagtail 4.1, postgres
-# - django 4.0, python 3.9, wagtail 4.2, sqlite
-# - django 4.1, python 3.10, wagtail 5.0, postgres
-# - django 4.2, python 3.11, wagtail 5.0, sqlite
-# - django 4.1, python 3.10, wagtail 5.1, postgres
-# - django 4.2, python 3.11, wagtail 5.1, sqlite
-# - django 4.2, python 3.11, wagtail main, sqlite (allow failures)
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        include:
-          - python: "3.8"
-            django: "Django>=3.2,<4.0"
-            wagtail: "wagtail>=4.1,<4.2"
-            database: "postgresql"
-            experimental: false
-          - python: "3.9"
-            django: "Django>=4.0,<4.1"
-            wagtail: "wagtail>=4.2,<5.0"
-            database: "sqlite3"
-            experimental: false
-          - python: "3.10"
-            django: "Django>=4.1,<4.2"
-            wagtail: "wagtail>=5.0,<5.1"
-            database: "postgresql"
-            experimental: false
-          - python: "3.11"
-            django: "Django>=4.2,<4.3"
-            wagtail: "wagtail>=5.0,<5.1"
-            database: "sqlite3"
-            experimental: false
-          - python: "3.10"
-            django: "Django>=4.1,<4.2"
-            wagtail: "wagtail>=5.1,<5.2"
-            database: "postgresql"
-            experimental: false
-          - python: "3.11"
-            django: "Django>=4.2,<4.3"
-            wagtail: "wagtail>=5.1,<5.2"
-            database: "sqlite3"
-            experimental: false
-
-          - python: "3.11"
-            django: "Django>=4.2,<4.3"
-            wagtail: "git+https://github.com/wagtail/wagtail.git@main#egg=wagtail"
-            database: "sqlite3"
-            experimental: true
-
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install "psycopg2>=2.9.3"
-          pip install "${{ matrix.django }}"
-          pip install "${{ matrix.wagtail }}"
-          pip install -e .[testing]
-      - name: Test
-        run: ./runtests.py
-        env:
-          DATABASE_ENGINE: django.db.backends.${{ matrix.database }}
-          DATABASE_HOST: localhost
-          DATABASE_USER: postgres
-          DATABASE_PASS: postgres
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install tox tox-gh-actions
+    - name: Test with tox
+      run: tox
