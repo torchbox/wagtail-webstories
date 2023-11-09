@@ -14,7 +14,6 @@ if getattr(settings, 'WAGTAIL_WEBSTORIES_IMPORT_MODEL', None):
             path('webstories/', include(admin_urls, namespace='wagtail_webstories')),
         ]
 
-
     @hooks.register('register_admin_menu_item')
     def register_webstories_item():
         if WAGTAIL_VERSION >= (5, 2):

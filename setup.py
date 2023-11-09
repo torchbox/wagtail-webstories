@@ -34,6 +34,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "wagtail>=4.1",
+        "Django>=3.2",
         "webstories>=0.0.1,<1",
         "requests>=2.24.0,<3",
         "beautifulsoup4>=4.6,<5",
