@@ -10,12 +10,12 @@ jobs:
   nightly-test:
     # Cannot check the existence of secrets, so limiting to repository name to prevent all forks to run nightly.
     # See: https://github.com/actions/runner/issues/520
-    if: ${{ github.repository == 'torchbox/wagtail-webstories' }}
+    if: ${{ github.repository == "torchbox/wagtail-webstories" }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Install dependencies
@@ -28,7 +28,7 @@ jobs:
         continue-on-error: true
         run: ./runtests.py
       - name: Send Slack notification on failure
-        if: steps.test.outcome == 'failure'
+        if: steps.test.outcome == "failure"
         run: |
           python .github/report_nightly_build_failure.py
         env:
