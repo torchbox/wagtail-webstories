@@ -2,9 +2,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-
 from wagtail import blocks
-
 from webstories import Story, StoryPage
 
 from .markup import AMPText
@@ -12,7 +10,9 @@ from .markup import AMPText
 
 class AMPCleanHTMLBlock(blocks.RawHTMLBlock):
     def clean(self, value):
-        if isinstance(value, AMPText) and getattr(settings, 'WAGTAIL_WEBSTORIES_CLEAN_HTML', True):
+        if isinstance(value, AMPText) and getattr(
+            settings, "WAGTAIL_WEBSTORIES_CLEAN_HTML", True
+        ):
             return AMPText(StoryPage.clean_html_fragment(value.source))
         else:
             return value
@@ -52,26 +52,27 @@ class PageBlock(blocks.StructBlock):
 
 class StoryChooserBlock(blocks.PageChooserBlock):
     def __init__(self, **kwargs):
-        has_specified_page_type = kwargs.get('page_type') or kwargs.get('target_model')
+        has_specified_page_type = kwargs.get("page_type") or kwargs.get("target_model")
         if not has_specified_page_type:
             # allow selecting any page model that inherits from BaseWebStoryPage
             from .models import get_story_page_models
-            kwargs['target_model'] = get_story_page_models()
+
+            kwargs["target_model"] = get_story_page_models()
 
         super().__init__(**kwargs)
 
     def get_context(self, value, parent_context=None):
         context = super().get_context(value, parent_context=parent_context)
-        context['page'] = value.specific
+        context["page"] = value.specific
         return context
 
     class Meta:
-        template = 'wagtail_webstories/blocks/story_poster_link.html'
+        template = "wagtail_webstories/blocks/story_poster_link.html"
 
 
 class StoryEmbedBlock(StoryChooserBlock):
     class Meta:
-        template = 'wagtail_webstories/blocks/story_embed_block.html'
+        template = "wagtail_webstories/blocks/story_embed_block.html"
 
 
 class ExternalStoryBlock(blocks.URLBlock):
@@ -100,7 +101,7 @@ class ExternalStoryBlock(blocks.URLBlock):
     def get_prep_value(self, value):
         # serialisable value should be a URL string
         if value is None:
-            return ''
+            return ""
         elif isinstance(value, str):
             return value
         else:
@@ -109,7 +110,7 @@ class ExternalStoryBlock(blocks.URLBlock):
     def value_for_form(self, value):
         # the value to be handled by the URLField is a plain URL string (or the empty string)
         if value is None:
-            return ''
+            return ""
         elif isinstance(value, str):
             return value
         else:
@@ -121,6 +122,7 @@ class ExternalStoryBlock(blocks.URLBlock):
 
     def clean(self, value):
         from .models import ExternalStory
+
         value = super().clean(value)
 
         if value is not None:
@@ -135,13 +137,13 @@ class ExternalStoryBlock(blocks.URLBlock):
 
     def get_context(self, value, parent_context=None):
         context = super().get_context(value, parent_context=parent_context)
-        context['story'] = value
+        context["story"] = value
         return context
 
     class Meta:
-        template = 'wagtail_webstories/blocks/external_story_poster_link.html'
+        template = "wagtail_webstories/blocks/external_story_poster_link.html"
 
 
 class ExternalStoryEmbedBlock(ExternalStoryBlock):
     class Meta:
-        template = 'wagtail_webstories/blocks/external_story_embed_block.html'
+        template = "wagtail_webstories/blocks/external_story_embed_block.html"
