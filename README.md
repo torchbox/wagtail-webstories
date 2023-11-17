@@ -17,7 +17,7 @@ Add to INSTALLED_APPS:
 ```python
 INSTALLED_APPS = [
     # ...
-    'wagtail_webstories',
+    "wagtail_webstories",
     # ...
 ]
 ```
@@ -35,12 +35,15 @@ To embed a web story into a regular (non-AMP) StreamField-based page, include th
 ```python
 from wagtail_webstories.blocks import ExternalStoryEmbedBlock
 
+
 class BlogPage(Page):
-    body = StreamField([
-        ('heading', blocks.CharBlock()),
-        ('paragraph', blocks.RichTextBlock()),
-        ('story_embed', ExternalStoryEmbedBlock()),
-    ])
+    body = StreamField(
+        [
+            ("heading", blocks.CharBlock()),
+            ("paragraph", blocks.RichTextBlock()),
+            ("story_embed", ExternalStoryEmbedBlock()),
+        ]
+    )
 ```
 
 This block allows the page author to provide the URL to an AMP web story, which will render on the front-end template (when using `{% include_block %}`) as an `<amp-story-player>` element; your template should include [the necessary scripts for rendering this](https://amp.dev/documentation/guides-and-tutorials/integrate/embed-stories/?format=stories#embed-amp-story-player), along with a CSS rule to specify appropriate dimensions:
@@ -86,7 +89,7 @@ class BlogPostWithStoryPage(Page):
 
     def get_context(self, request):
         context = super().get_context(request)
-        context['story_obj'] = ExternalStory.get_for_url(self.story_url)
+        context["story_obj"] = ExternalStory.get_for_url(self.story_url)
         return context
 ```
 
@@ -104,6 +107,7 @@ To allow stories to be imported as Wagtail pages, define a model that extends `w
 ```python
 from wagtail_webstories.models import BaseWebStoryPage
 
+
 class StoryPage(BaseWebStoryPage):
     pass
 ```
@@ -113,9 +117,14 @@ Alternatively, if your project has an existing base page class that all page typ
 ```python
 from wagtail_webstories.models import WebStoryPageMixin
 
+
 class StoryPage(WebStoryPageMixin, BasePage):
-    content_panels = BasePage.content_panels + WebStoryPageMixin.web_story_content_panels
-    promote_panels = BasePage.promote_panels + WebStoryPageMixin.web_story_promote_panels
+    content_panels = (
+        BasePage.content_panels + WebStoryPageMixin.web_story_content_panels
+    )
+    promote_panels = (
+        BasePage.promote_panels + WebStoryPageMixin.web_story_promote_panels
+    )
 ```
 
 Now create a corresponding template that extends `wagtail_webstories/base_web_story_page.html`:
@@ -127,7 +136,7 @@ Now create a corresponding template that extends `wagtail_webstories/base_web_st
 Define a setting `WAGTAIL_WEBSTORIES_IMPORT_MODEL` pointing to the page model to use:
 
 ```python
-WAGTAIL_WEBSTORIES_IMPORT_MODEL = 'myapp.StoryPage'
+WAGTAIL_WEBSTORIES_IMPORT_MODEL = "myapp.StoryPage"
 ```
 
 This will now add a "Web stories" item to the Wagtail admin menu, allowing you to import stories by URL.
@@ -168,7 +177,7 @@ from django.apps import AppConfig
 
 
 class MyappConfig(AppConfig):
-    name = 'myapp'
+    name = "myapp"
 
     def ready(self):
         import myapp.signals  # noqa
@@ -176,7 +185,7 @@ class MyappConfig(AppConfig):
 
 # myapp/__init__.py
 
-default_app_config = 'myapp.apps.MyappConfig'
+default_app_config = "myapp.apps.MyappConfig"
 ```
 
 Since importing images can be a time-consuming process, you may wish to offload the call to `import_images` to a background task using Celery or similar, to avoid this blocking a web server thread.
@@ -185,7 +194,6 @@ To customise the creation of new images (e.g. to assign imported images to a par
 
 ```python
 class StoryPage(BaseWebStoryPage):
-
     def _create_image(self, file, title=None):
         image = super()._create_image(file, title=title)
         image.copyright = "All rights reserved"
@@ -198,6 +206,7 @@ If you have [wagtailmedia](https://pypi.org/project/wagtailmedia/) installed, yo
 
 ```python
 # myapp/signals.py
+
 
 @receiver(post_save, sender=StoryPage)
 def import_story_images(sender, instance, **kwargs):
@@ -214,12 +223,15 @@ To embed or link an imported web story into a regular (non-AMP) StreamField-base
 ```python
 from wagtail_webstories.blocks import StoryEmbedBlock
 
+
 class BlogPage(Page):
-    body = StreamField([
-        ('heading', blocks.CharBlock()),
-        ('paragraph', blocks.RichTextBlock()),
-        ('local_story_embed', StoryEmbedBlock(target_model=StoryPage)),
-    ])
+    body = StreamField(
+        [
+            ("heading", blocks.CharBlock()),
+            ("paragraph", blocks.RichTextBlock()),
+            ("local_story_embed", StoryEmbedBlock(target_model=StoryPage)),
+        ]
+    )
 ```
 
 The `target_model` argument is optional - by default, any page type inheriting from BaseWebStoryPage can be chosen. As with ExternalStoryEmbedBlock and ExternalStoryBlock, your page template must contain the appropriate JavaScript or CSS include for rendering the block.
@@ -231,7 +243,9 @@ The templates `wagtail_webstories/blocks/story_poster_link.html` and `wagtail_we
 class StoryIndexPage(Page):
     def get_context(self, request):
         context = super().get_context(request)
-        context['stories'] = StoryPage.objects.child_of(self).live().order_by('-first_published_at')
+        context["stories"] = (
+            StoryPage.objects.child_of(self).live().order_by("-first_published_at")
+        )
         return context
 ```
 

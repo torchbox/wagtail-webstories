@@ -1,10 +1,9 @@
 import hashlib
 import json
 import os.path
-import requests
-
 from urllib.parse import urljoin, urlparse
 
+import requests
 from bs4 import BeautifulSoup
 from django.apps import apps
 from django.core.exceptions import ValidationError
@@ -13,18 +12,15 @@ from django.core.files.images import ImageFile
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import StreamField
 from wagtail.images import get_image_model_string
 from wagtail.images.models import Filter
 from wagtail.models import Page, get_page_models
-
 from webstories import Story
 
 from .blocks import PageBlock
 from .markup import AMPText
-
 
 # Retrieve the (possibly custom) image model. Can't use get_image_model as of Wagtail 2.11, as we
 # need require_ready=False: https://github.com/wagtail/wagtail/pull/6568
@@ -33,59 +29,80 @@ Image = apps.get_model(get_image_model_string(), require_ready=False)
 
 def _name_from_url(url):
     url_obj = urlparse(url)
-    filename = url_obj.path.split('/')[-1]
+    filename = url_obj.path.split("/")[-1]
     return os.path.splitext(filename)[0]
 
 
 class WebStoryPageMixin(models.Model):
-    PUBLISHER_LOGO_IMAGE_FILTER = 'original'
-    PORTRAIT_IMAGE_FILTER = 'fill-640x853'
-    SQUARE_IMAGE_FILTER = 'fill-640x640'
-    LANDSCAPE_IMAGE_FILTER = 'fill-853x640'
+    PUBLISHER_LOGO_IMAGE_FILTER = "original"
+    PORTRAIT_IMAGE_FILTER = "fill-640x853"
+    SQUARE_IMAGE_FILTER = "fill-640x640"
+    LANDSCAPE_IMAGE_FILTER = "fill-853x640"
 
     publisher = models.CharField(blank=False, max_length=2047)
 
-    publisher_logo = models.ForeignKey(Image, blank=True, null=True, related_name='+', on_delete=models.SET_NULL)
-    publisher_logo_src_original = models.URLField('Publisher logo URL', blank=True, max_length=2047, editable=False)
+    publisher_logo = models.ForeignKey(
+        Image, blank=True, null=True, related_name="+", on_delete=models.SET_NULL
+    )
+    publisher_logo_src_original = models.URLField(
+        "Publisher logo URL", blank=True, max_length=2047, editable=False
+    )
 
-    poster_image = models.ForeignKey(Image, blank=True, null=True, related_name='+', on_delete=models.SET_NULL)
-    poster_portrait_src_original = models.URLField('Poster portrait image URL', blank=True, max_length=2047, editable=False)
-    poster_square_src_original = models.URLField('Poster square image URL', blank=True, max_length=2047, editable=False)
-    poster_landscape_src_original = models.URLField('Poster landscape image URL', blank=True, max_length=2047, editable=False)
+    poster_image = models.ForeignKey(
+        Image, blank=True, null=True, related_name="+", on_delete=models.SET_NULL
+    )
+    poster_portrait_src_original = models.URLField(
+        "Poster portrait image URL", blank=True, max_length=2047, editable=False
+    )
+    poster_square_src_original = models.URLField(
+        "Poster square image URL", blank=True, max_length=2047, editable=False
+    )
+    poster_landscape_src_original = models.URLField(
+        "Poster landscape image URL", blank=True, max_length=2047, editable=False
+    )
 
-    original_url = models.URLField('Original URL', blank=True, max_length=2047)
+    original_url = models.URLField("Original URL", blank=True, max_length=2047)
 
     custom_css = models.TextField(blank=True)
 
-    pages = StreamField([
-        ('page', PageBlock()),
-    ], use_json_field=True)
+    pages = StreamField(
+        [
+            ("page", PageBlock()),
+        ],
+        use_json_field=True,
+    )
 
     web_story_content_panels = [
-        FieldPanel('custom_css'),
-        FieldPanel('pages'),
+        FieldPanel("custom_css"),
+        FieldPanel("pages"),
     ]
 
     web_story_promote_panels = [
-        MultiFieldPanel([
-            FieldPanel('publisher'),
-            FieldPanel('publisher_logo'),
-            FieldPanel('original_url'),
-        ], heading="Publisher"),
-        MultiFieldPanel([
-            FieldPanel('poster_image'),
-        ], heading="Poster"),
-    ]        
+        MultiFieldPanel(
+            [
+                FieldPanel("publisher"),
+                FieldPanel("publisher_logo"),
+                FieldPanel("original_url"),
+            ],
+            heading="Publisher",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("poster_image"),
+            ],
+            heading="Poster",
+        ),
+    ]
 
     def clean(self):
         super().clean()
 
         errors = {}
         if not (self.publisher_logo or self.publisher_logo_src_original):
-            errors['publisher_logo'] = _("A publisher logo must be provided.")
+            errors["publisher_logo"] = _("A publisher logo must be provided.")
 
         if not (self.poster_image or self.poster_portrait_src_original):
-            errors['poster_image'] = _("A poster image must be provided.")
+            errors["poster_image"] = _("A poster image must be provided.")
 
         if errors:
             raise ValidationError(errors)
@@ -148,9 +165,16 @@ class WebStoryPageMixin(models.Model):
                 "@id": self.full_url,
             },
             "headline": self.title,
-            "image": list(filter(bool, [
-                self.poster_portrait_src, self.poster_square_src, self.poster_landscape_src
-            ])),
+            "image": list(
+                filter(
+                    bool,
+                    [
+                        self.poster_portrait_src,
+                        self.poster_square_src,
+                        self.poster_landscape_src,
+                    ],
+                )
+            ),
             "datePublished": (
                 self.first_published_at and self.first_published_at.isoformat()
             ),
@@ -160,23 +184,20 @@ class WebStoryPageMixin(models.Model):
             "publisher": {
                 "@type": "Organisation",
                 "name": self.publisher,
-                "logo": {
-                    "@type": "ImageObject",
-                    "url": self.publisher_logo_src
-                }
-            }
+                "logo": {"@type": "ImageObject", "url": self.publisher_logo_src},
+            },
         }
 
     def get_context(self, request):
         context = super().get_context(request)
-        context['ld_json'] = json.dumps(self.linked_data)
+        context["ld_json"] = json.dumps(self.linked_data)
         return context
 
     def import_images(self):
         # if flag indicates we have imported images on this instance already,
         # don't repeat; this allows us to call import_images / save within a
         # post_save signal without the second save retriggering a full import_images
-        if getattr(self, '_has_imported_images', False):
+        if getattr(self, "_has_imported_images", False):
             return False  # report no changes
 
         meta_has_changed = self._import_metadata_images()
@@ -218,7 +239,7 @@ class WebStoryPageMixin(models.Model):
                 self.poster_image.renditions.create(
                     filter_spec=self.PORTRAIT_IMAGE_FILTER,
                     file=portrait_image_file,
-                    focal_point_key=portrait_filter.get_cache_key(self.poster_image)
+                    focal_point_key=portrait_filter.get_cache_key(self.poster_image),
                 )
 
                 if self.poster_square_src_original:
@@ -227,9 +248,13 @@ class WebStoryPageMixin(models.Model):
                         self.poster_image.renditions.create(
                             filter_spec=self.SQUARE_IMAGE_FILTER,
                             file=self._image_file_from_url(
-                                urljoin(self.original_url, self.poster_square_src_original)
+                                urljoin(
+                                    self.original_url, self.poster_square_src_original
+                                )
                             ),
-                            focal_point_key=square_filter.get_cache_key(self.poster_image)
+                            focal_point_key=square_filter.get_cache_key(
+                                self.poster_image
+                            ),
                         )
                     except requests.exceptions.RequestException:
                         pass
@@ -240,9 +265,14 @@ class WebStoryPageMixin(models.Model):
                         self.poster_image.renditions.create(
                             filter_spec=self.LANDSCAPE_IMAGE_FILTER,
                             file=self._image_file_from_url(
-                                urljoin(self.original_url, self.poster_landscape_src_original)
+                                urljoin(
+                                    self.original_url,
+                                    self.poster_landscape_src_original,
+                                )
                             ),
-                            focal_point_key=landscape_filter.get_cache_key(self.poster_image)
+                            focal_point_key=landscape_filter.get_cache_key(
+                                self.poster_image
+                            ),
                         )
                     except requests.exceptions.RequestException:
                         pass
@@ -259,25 +289,25 @@ class WebStoryPageMixin(models.Model):
                 new_pages.append((page.block_type, page.value))
                 continue
 
-            page_html = page.value['html'].source
-            page_dom = dom = BeautifulSoup(page_html, 'html.parser')
+            page_html = page.value["html"].source
+            page_dom = BeautifulSoup(page_html, "html.parser")
             # look for <amp-img> elements with src attributes
-            for img_tag in page_dom.select('amp-img[src]'):
-                image_url = urljoin(self.original_url, img_tag['src'])
+            for img_tag in page_dom.select("amp-img[src]"):
+                image_url = urljoin(self.original_url, img_tag["src"])
                 title = (
-                    img_tag.get('alt')
+                    img_tag.get("alt")
                     or _name_from_url(image_url)
                     or ("image from story: %s" % self.title)
                 )
                 try:
                     image, created = self._image_from_url(image_url, title=title)
-                    img_tag['data-wagtail-image-id'] = image.id
-                    del img_tag['src']
+                    img_tag["data-wagtail-image-id"] = image.id
+                    del img_tag["src"]
                     has_changed = True
                 except requests.exceptions.RequestException:
                     pass
 
-            page.value['html'] = AMPText(str(page_dom))
+            page.value["html"] = AMPText(str(page_dom))
             new_pages.append((page.block_type, page.value))
 
         if has_changed:
@@ -287,7 +317,7 @@ class WebStoryPageMixin(models.Model):
 
     def _image_file_from_url(self, url):
         url_obj = urlparse(url)
-        filename = url_obj.path.split('/')[-1] or 'image'
+        filename = url_obj.path.split("/")[-1] or "image"
         response = requests.get(url)
         response.raise_for_status()
         return ImageFile(ContentFile(response.content), name=filename)
@@ -322,7 +352,7 @@ class WebStoryPageMixin(models.Model):
         # if flag indicates we have imported videos on this instance already,
         # don't repeat; this allows us to call import_videos / save within a
         # post_save signal without the second save retriggering a full import_videos
-        if getattr(self, '_has_imported_videos', False):
+        if getattr(self, "_has_imported_videos", False):
             return False  # report no changes
 
         content_has_changed = False
@@ -334,11 +364,11 @@ class WebStoryPageMixin(models.Model):
                 new_pages.append((page.block_type, page.value))
                 continue
 
-            page_html = page.value['html'].source
-            page_dom = dom = BeautifulSoup(page_html, 'html.parser')
+            page_html = page.value["html"].source
+            page_dom = BeautifulSoup(page_html, "html.parser")
             # look for <amp-video> elements
-            for video_tag in page_dom.select('amp-video'):
-                poster_url = video_tag.get('poster')
+            for video_tag in page_dom.select("amp-video"):
+                poster_url = video_tag.get("poster")
                 if poster_url:
                     try:
                         poster_image_file = self._image_file_from_url(
@@ -349,42 +379,46 @@ class WebStoryPageMixin(models.Model):
                 else:
                     poster_image_file = None
 
-                width = video_tag.get('width')
-                height = video_tag.get('height')
+                width = video_tag.get("width")
+                height = video_tag.get("height")
                 fallback_title = "video from story: %s" % self.title
 
-                video_url = video_tag.get('src')
+                video_url = video_tag.get("src")
                 if video_url:
                     title = _name_from_url(video_url) or fallback_title
                     try:
                         video, created = self._video_from_url(
                             urljoin(self.original_url, video_url),
-                            title=title, width=width, height=height,
-                            thumbnail=poster_image_file
+                            title=title,
+                            width=width,
+                            height=height,
+                            thumbnail=poster_image_file,
                         )
-                        video_tag['data-wagtail-media-id'] = video.id
-                        del video_tag['src']
+                        video_tag["data-wagtail-media-id"] = video.id
+                        del video_tag["src"]
                         content_has_changed = True
                     except requests.exceptions.RequestException:
                         pass
 
-                for source_tag in video_tag.find_all('source', recursive=False):
-                    video_url = source_tag.get('src')
+                for source_tag in video_tag.find_all("source", recursive=False):
+                    video_url = source_tag.get("src")
                     if video_url:
                         title = _name_from_url(video_url) or fallback_title
                         try:
                             video, created = self._video_from_url(
                                 urljoin(self.original_url, video_url),
-                                title=title, width=width, height=height,
-                                thumbnail=poster_image_file
+                                title=title,
+                                width=width,
+                                height=height,
+                                thumbnail=poster_image_file,
                             )
-                            source_tag['data-wagtail-media-id'] = video.id
-                            del source_tag['src']
+                            source_tag["data-wagtail-media-id"] = video.id
+                            del source_tag["src"]
                             content_has_changed = True
                         except requests.exceptions.RequestException:
                             pass
 
-            page.value['html'] = AMPText(str(page_dom))
+            page.value["html"] = AMPText(str(page_dom))
             new_pages.append((page.block_type, page.value))
 
         if content_has_changed:
@@ -395,24 +429,25 @@ class WebStoryPageMixin(models.Model):
 
     def _video_file_from_url(self, url):
         url_obj = urlparse(url)
-        filename = url_obj.path.split('/')[-1] or 'video'
+        filename = url_obj.path.split("/")[-1] or "video"
         response = requests.get(url)
         response.raise_for_status()
         return File(ContentFile(response.content), name=filename)
 
     def _create_video(self, file, **kwargs):
         from wagtailmedia.models import get_media_model
+
         Media = get_media_model()
         # for wagtailmedia < 0.7, need to ensure that the duration field
         # is populated
-        if 'duration' not in kwargs and not Media._meta.get_field('duration').blank:
-            kwargs['duration'] = 0
+        if "duration" not in kwargs and not Media._meta.get_field("duration").blank:
+            kwargs["duration"] = 0
         video = Media(file=file, **kwargs)
         return video
 
     def _video_from_url(self, url, **kwargs):
         video_file = self._video_file_from_url(url)
-        video = self._create_video(video_file, type='video', **kwargs)
+        video = self._create_video(video_file, type="video", **kwargs)
         video.save()
         return (video, True)
 
@@ -433,41 +468,59 @@ def get_story_page_models():
     Return a list of all non-abstract page models that inherit from WebStoryPageMixin
     """
     return [
-        model for model in get_page_models()
-        if issubclass(model, WebStoryPageMixin)
+        model for model in get_page_models() if issubclass(model, WebStoryPageMixin)
     ]
 
 
 class ExternalStory(models.Model):
     url = models.TextField()
     # a SHA-1 hash of the URL
-    url_hash = models.CharField(max_length=40, editable=False, unique=True, db_index=True)
+    url_hash = models.CharField(
+        max_length=40, editable=False, unique=True, db_index=True
+    )
     title = models.TextField(blank=True, editable=False)
     publisher = models.TextField(blank=False, editable=False)
-    publisher_logo_src = models.TextField('Publisher logo URL', blank=True, editable=False)
-    poster_portrait_src = models.TextField('Poster portrait image URL', blank=True, editable=False)
-    poster_square_src = models.TextField('Poster square image URL', blank=True, editable=False)
-    poster_landscape_src = models.TextField('Poster landscape image URL', blank=True, editable=False)
+    publisher_logo_src = models.TextField(
+        "Publisher logo URL", blank=True, editable=False
+    )
+    poster_portrait_src = models.TextField(
+        "Poster portrait image URL", blank=True, editable=False
+    )
+    poster_square_src = models.TextField(
+        "Poster square image URL", blank=True, editable=False
+    )
+    poster_landscape_src = models.TextField(
+        "Poster landscape image URL", blank=True, editable=False
+    )
     last_fetched_at = models.DateTimeField()
 
     @classmethod
     def get_for_url(cls, url):
-        url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()
+        url_hash = hashlib.sha1(url.encode("utf-8")).hexdigest()
         try:
             return cls.objects.get(url_hash=url_hash)
         except cls.DoesNotExist:
             html = requests.get(url).text
             story = Story(html)
             result, created = cls.objects.update_or_create(
-                url_hash=url_hash, defaults={
-                    'url': url,
-                    'title': story.title,
-                    'publisher': story.publisher,
-                    'publisher_logo_src': urljoin(url, story.publisher_logo_src) if story.publisher_logo_src else '',
-                    'poster_portrait_src': urljoin(url, story.poster_portrait_src) if story.poster_portrait_src else '',
-                    'poster_square_src': urljoin(url, story.poster_square_src) if story.poster_square_src else '',
-                    'poster_landscape_src': urljoin(url, story.poster_landscape_src) if story.poster_landscape_src else '',
-                    'last_fetched_at': timezone.now(),
-                }
+                url_hash=url_hash,
+                defaults={
+                    "url": url,
+                    "title": story.title,
+                    "publisher": story.publisher,
+                    "publisher_logo_src": urljoin(url, story.publisher_logo_src)
+                    if story.publisher_logo_src
+                    else "",
+                    "poster_portrait_src": urljoin(url, story.poster_portrait_src)
+                    if story.poster_portrait_src
+                    else "",
+                    "poster_square_src": urljoin(url, story.poster_square_src)
+                    if story.poster_square_src
+                    else "",
+                    "poster_landscape_src": urljoin(url, story.poster_landscape_src)
+                    if story.poster_landscape_src
+                    else "",
+                    "last_fetched_at": timezone.now(),
+                },
             )
             return result
