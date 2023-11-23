@@ -1,8 +1,7 @@
 import json
+
 import responses
-
 from django.test import TestCase
-
 from wagtail.models import Site
 
 from tests.models import BlogPage, StoryPage
@@ -22,26 +21,32 @@ class TestEmbedding(TestCase):
             #cover {background-color: #eee;}
         """
         self.story_page.pages = [
-            ('page', {
-                'id': 'cover',
-                'html': """
+            (
+                "page",
+                {
+                    "id": "cover",
+                    "html": """
                     <amp-story-page id="cover">
                         <amp-story-grid-layer template="vertical">
                             <h1>Wagtail spotting</h1>
                         </amp-story-grid-layer>
                     </amp-story-page>
-                """
-            }),
-            ('page', {
-                'id': 'page-1',
-                'html': """
+                """,
+                },
+            ),
+            (
+                "page",
+                {
+                    "id": "page-1",
+                    "html": """
                     <amp-story-page id="page-1">
                         <amp-story-grid-layer template="vertical">
                             <p>Today we went out wagtail spotting</p>
                         </amp-story-grid-layer>
                     </amp-story-page>
-                """
-            }),
+                """,
+                },
+            ),
         ]
         self.home.add_child(instance=self.story_page)
 
@@ -80,14 +85,14 @@ class TestEmbedding(TestCase):
             slug="november-nature-notes",
         )
         blog_page.body = [
-            ('heading', "Story of the week"),
-            ('story_embed', self.story_page),
+            ("heading", "Story of the week"),
+            ("story_embed", self.story_page),
         ]
         self.home.add_child(instance=blog_page)
 
-        response = self.client.get('/november-nature-notes/')
+        response = self.client.get("/november-nature-notes/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<amp-story-player>')
+        self.assertContains(response, "<amp-story-player>")
         self.assertContains(response, '<a href="/wagtail-spotting/">')
 
     def test_render_with_link(self):
@@ -96,59 +101,81 @@ class TestEmbedding(TestCase):
             slug="november-nature-notes",
         )
         blog_page.body = [
-            ('heading', "Story of the week"),
-            ('story_link', self.story_page),
+            ("heading", "Story of the week"),
+            ("story_link", self.story_page),
         ]
         self.home.add_child(instance=blog_page)
 
-        response = self.client.get('/november-nature-notes/')
+        response = self.client.get("/november-nature-notes/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/wagtail-spotting/"')
-        self.assertContains(response, '"background-image: url(https://example.com/wagtails.jpg);"')
+        self.assertContains(
+            response, '"background-image: url(https://example.com/wagtails.jpg);"'
+        )
         self.assertContains(response, '<div class="title">Wagtail spotting</div>')
 
     @responses.activate
     def test_render_with_external_embed(self):
         responses.add(
-            responses.GET, 'https://example.com/good-story.html', content_type='text/html',
-            body=self.external_story_body
+            responses.GET,
+            "https://example.com/good-story.html",
+            content_type="text/html",
+            body=self.external_story_body,
         )
 
         blog_page = BlogPage(
             title="November nature notes",
             slug="november-nature-notes",
         )
-        blog_page.body = json.dumps([
-            {'type': 'heading', 'value': "Story of the week"},
-            {'type': 'external_story_embed', 'value': "https://example.com/good-story.html"},
-        ])
+        blog_page.body = json.dumps(
+            [
+                {"type": "heading", "value": "Story of the week"},
+                {
+                    "type": "external_story_embed",
+                    "value": "https://example.com/good-story.html",
+                },
+            ]
+        )
         self.home.add_child(instance=blog_page)
 
-        response = self.client.get('/november-nature-notes/')
+        response = self.client.get("/november-nature-notes/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<amp-story-player>')
+        self.assertContains(response, "<amp-story-player>")
         self.assertContains(response, '<a href="https://example.com/good-story.html">')
-        self.assertContains(response, '<img src="https://example.com/wagtails.jpg" loading="lazy" width="100%" height="100%" amp-story-player-poster-img>')
-        self.assertContains(response, 'Wagtail spotting')
+        self.assertContains(
+            response,
+            '<img src="https://example.com/wagtails.jpg" loading="lazy" width="100%" height="100%" amp-story-player-poster-img>',
+        )
+        self.assertContains(response, "Wagtail spotting")
 
     @responses.activate
     def test_render_with_external_story_link(self):
         responses.add(
-            responses.GET, 'https://example.com/good-story.html', content_type='text/html',
-            body=self.external_story_body
+            responses.GET,
+            "https://example.com/good-story.html",
+            content_type="text/html",
+            body=self.external_story_body,
         )
 
         blog_page = BlogPage(
             title="November nature notes",
             slug="november-nature-notes",
         )
-        blog_page.body = json.dumps([
-            {'type': 'heading', 'value': "Story of the week"},
-            {'type': 'external_story_link', 'value': "https://example.com/good-story.html"},
-        ])
+        blog_page.body = json.dumps(
+            [
+                {"type": "heading", "value": "Story of the week"},
+                {
+                    "type": "external_story_link",
+                    "value": "https://example.com/good-story.html",
+                },
+            ]
+        )
         self.home.add_child(instance=blog_page)
 
-        response = self.client.get('/november-nature-notes/')
+        response = self.client.get("/november-nature-notes/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<a href="https://example.com/good-story.html" target="_blank" class="webstory-poster" style="background-image: url(https://example.com/wagtails.jpg);">')
+        self.assertContains(
+            response,
+            '<a href="https://example.com/good-story.html" target="_blank" class="webstory-poster" style="background-image: url(https://example.com/wagtails.jpg);">',
+        )
         self.assertContains(response, '<div class="title">Wagtail spotting</div>')
