@@ -40,6 +40,12 @@ setup(
     ],
     extras_require={
         "testing": [
+            # For PEP8 linting
+            "black",
+            "flake8",
+            "isort",
+            "pre-commit",
+            # Required for running the tests
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<10.0.0",
             "wagtailmedia>=0.6,<0.15",
