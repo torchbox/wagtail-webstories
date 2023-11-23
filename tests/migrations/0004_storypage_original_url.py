@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0003_storypage_image_fields'),
+        ("tests", "0003_storypage_image_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='storypage',
-            name='original_url',
-            field=models.URLField(blank=True, max_length=2047, verbose_name='Original URL'),
+            model_name="storypage",
+            name="original_url",
+            field=models.URLField(
+                blank=True, max_length=2047, verbose_name="Original URL"
+            ),
         ),
     ]

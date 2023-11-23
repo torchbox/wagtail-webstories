@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('wagtail_webstories', '0001_initial'),
+        ("wagtail_webstories", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='externalstory',
-            name='url_hash',
-            field=models.CharField(db_index=True, editable=False, max_length=40, unique=True),
+            model_name="externalstory",
+            name="url_hash",
+            field=models.CharField(
+                db_index=True, editable=False, max_length=40, unique=True
+            ),
         ),
     ]

@@ -1,7 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
 from wagtail.admin.widgets import AdminPageChooser
 from wagtail.models import Page
 
@@ -11,16 +10,18 @@ class ImportStoryForm(forms.Form):
     destination = forms.ModelChoiceField(
         required=True,
         queryset=Page.objects.all(),
-        widget=AdminPageChooser(can_choose_root=True, user_perms='copy_to'),
-        help_text=_("Where the new story page will be created")
+        widget=AdminPageChooser(can_choose_root=True, user_perms="copy_to"),
+        help_text=_("Where the new story page will be created"),
     )
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user')
+        self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
 
     def clean_destination(self):
-        destination = self.cleaned_data['destination']
+        destination = self.cleaned_data["destination"]
         if not destination.permissions_for_user(self.user).can_add_subpage():
-            raise ValidationError(_("You do not have permission to create a page at this location"))
+            raise ValidationError(
+                _("You do not have permission to create a page at this location")
+            )
         return destination

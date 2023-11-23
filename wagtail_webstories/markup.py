@@ -1,4 +1,5 @@
 import re
+
 from django.apps import apps
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -14,26 +15,32 @@ def _replace_image_id(match):
     try:
         image = Image.objects.get(id=match.group(1))
     except Image.DoesNotExist:
-        return ''
+        return ""
 
-    rendition = get_rendition_or_not_found(image, 'original')
+    rendition = get_rendition_or_not_found(image, "original")
     return 'src="%s"' % escape(rendition.url)
 
 
 def _replace_media_id(match):
     from wagtailmedia.models import get_media_model
+
     Media = get_media_model()
 
     try:
         media = Media.objects.get(id=match.group(1))
     except Media.DoesNotExist:
-        return ''
+        return ""
 
     return 'src="%s"' % escape(media.url)
 
 
-FIND_DATA_WAGTAIL_IMAGE_ID_ATTR = re.compile(r'''\bdata-wagtail-image-id=["'](\d+)["']''')
-FIND_DATA_WAGTAIL_MEDIA_ID_ATTR = re.compile(r'''\bdata-wagtail-media-id=["'](\d+)["']''')
+FIND_DATA_WAGTAIL_IMAGE_ID_ATTR = re.compile(
+    r"""\bdata-wagtail-image-id=["'](\d+)["']"""
+)
+FIND_DATA_WAGTAIL_MEDIA_ID_ATTR = re.compile(
+    r"""\bdata-wagtail-media-id=["'](\d+)["']"""
+)
+
 
 def expand_entities(html):
     """
@@ -47,8 +54,9 @@ def expand_entities(html):
 
 class AMPText:
     """Equivalent of Wagtail's RichText - performs entity expansion when rendered"""
+
     def __init__(self, source):
-        self.source = (source or '')
+        self.source = source or ""
 
     def __html__(self):
         return expand_entities(self.source)
