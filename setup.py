@@ -43,6 +43,7 @@ setup(
             "responses>=0.12,<1",
             "Pillow>=4.0.0,<10.0.0",
             "wagtailmedia>=0.6,<0.15",
+            "psycopg2>=2.9.3",
         ]
     },
     license="BSD",
