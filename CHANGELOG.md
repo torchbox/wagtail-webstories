@@ -1,10 +1,10 @@
 Changelog
 =========
 
-Unreleased
-----------
+0.1.1 (2023-11-24)
+------------------
 
-Update for Wagtail 5.1
+* Address deprecation warnings from Wagtail 5.1 and 5.2
 
 
 0.1 (2023-07-27)
