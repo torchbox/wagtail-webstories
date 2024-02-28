@@ -14,7 +14,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from wagtail import VERSION as WAGTAIL_VERSION
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import StreamField
 from wagtail.images import get_image_model_string
@@ -43,7 +42,6 @@ class WebStoryPageMixin(models.Model):
     PORTRAIT_IMAGE_FILTER = 'fill-640x853'
     SQUARE_IMAGE_FILTER = 'fill-640x640'
     LANDSCAPE_IMAGE_FILTER = 'fill-853x640'
-    extra_args = {"use_json_field": True} if WAGTAIL_VERSION < (6, 0) else {}
 
     publisher = models.CharField(blank=False, max_length=2047)
 
@@ -61,7 +59,7 @@ class WebStoryPageMixin(models.Model):
 
     pages = StreamField([
         ('page', PageBlock()),
-    ], **extra_args)
+    ], use_json_field=True)
 
     web_story_content_panels = [
         FieldPanel('custom_css'),

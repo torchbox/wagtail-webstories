@@ -2,7 +2,6 @@
 
 from django.db import migrations
 
-from wagtail import VERSION as WAGTAIL_VERSION
 import wagtail.blocks as wagtail_blocks
 import wagtail.fields as wagtail_fields
 
@@ -15,12 +14,10 @@ class Migration(migrations.Migration):
         ('tests', '0004_storypage_original_url'),
     ]
 
-    extra_args = {"use_json_field": True} if WAGTAIL_VERSION < (6, 0) else {}
-
     operations = [
         migrations.AlterField(
             model_name='blogpage',
             name='body',
-            field=wagtail_fields.StreamField([('heading', wagtail_blocks.CharBlock()), ('story_embed', wagtail_webstories.blocks.StoryEmbedBlock()), ('story_link', wagtail_webstories.blocks.StoryChooserBlock()), ('external_story_embed', wagtail_webstories.blocks.ExternalStoryEmbedBlock()), ('external_story_link', wagtail_webstories.blocks.ExternalStoryBlock())], **extra_args),
+            field=wagtail_fields.StreamField([('heading', wagtail_blocks.CharBlock()), ('story_embed', wagtail_webstories.blocks.StoryEmbedBlock()), ('story_link', wagtail_webstories.blocks.StoryChooserBlock()), ('external_story_embed', wagtail_webstories.blocks.ExternalStoryEmbedBlock()), ('external_story_link', wagtail_webstories.blocks.ExternalStoryBlock())], use_json_field=True),
         ),
     ]
